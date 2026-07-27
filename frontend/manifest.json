@@ -1,0 +1,27 @@
+{
+  "name": "گرمابندی ساختمان — مرجع عایق‌بندی حرارتی",
+  "short_name": "گرمابندی",
+  "description": "فروشگاه و مرجع تخصصی گرمابندی و عایق‌بندی حرارتی ساختمان — کتاب، فصل‌ها، دتایل‌های اجرایی و اسکن QR.",
+  "lang": "fa",
+  "dir": "rtl",
+  "start_url": "/index.html",
+  "scope": "/",
+  "id": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#0c0f16",
+  "theme_color": "#d49210",
+  "categories": ["shopping", "education", "books"],
+  "icons": [
+    { "src": "/assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/assets/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "فروشگاه", "short_name": "فروشگاه", "url": "/shop.html", "icons": [{ "src": "/assets/icon-192.png", "sizes": "192x192" }] },
+    { "name": "اسکن QR", "short_name": "اسکن", "url": "/qr.html", "icons": [{ "src": "/assets/icon-192.png", "sizes": "192x192" }] },
+    { "name": "پنل کاربری", "short_name": "پنل", "url": "/dashboard.html", "icons": [{ "src": "/assets/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

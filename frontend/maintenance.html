@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>در حال تعمیر سایت | گرمابندی ساختمان</title>
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="stylesheet" href="assets/fonts.css">
+<script>(function(){try{var t=localStorage.getItem("tb_theme")||"light";document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+<style>
+  [data-theme="dark"]{
+    --bg:#06080d; --bg2:#0c0f16; --bg3:#12161f; --card:#0e1219;
+    --text:#edeae3; --muted:#88847f; --faint:#484440;
+    --rim:rgba(255,255,255,.08); --rim2:rgba(255,255,255,.14);
+  }
+  [data-theme="light"]{
+    --bg:#eef0f3; --bg2:#e5e8ec; --bg3:#dce0e6; --card:#fff;
+    --text:#1b1e26; --muted:#5e6270; --faint:#a0a4ae;
+    --rim:rgba(0,0,0,.065); --rim2:rgba(0,0,0,.1);
+  }
+  :root{
+    --gold:#d49210; --gold2:#b87a08; --goldL:#f0b030;
+    --f:'Vazirmatn',sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    background:var(--bg); color:var(--text); font-family:var(--f);
+    direction:rtl; display:flex; align-items:center; justify-content:center;
+    min-height:100vh; padding:1.5rem; overflow-x:hidden;
+    background-image:radial-gradient(ellipse 65% 55% at 50% 0%,rgba(212,146,10,.09),transparent 72%);
+  }
+  .wrap{ text-align:center; max-width:500px; width:100%; }
+
+  /* چرخ‌دنده‌ی متحرک */
+  .gear-box{
+    width:96px; height:96px; margin:0 auto 1.8rem; position:relative;
+  }
+  .gear{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:24px;
+    background:linear-gradient(145deg,rgba(212,146,10,.14),rgba(212,146,10,.05));
+    border:1px solid rgba(212,146,10,.25);
+  }
+  .gear svg{ width:46px; height:46px; stroke:var(--gold);
+    animation:spin 4s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  h1{ font-size:clamp(1.4rem,4.5vw,2rem); font-weight:900; margin-bottom:.8rem; }
+  h1 span{ color:var(--goldL); }
+  .lead{ font-size:.98rem; line-height:2; color:var(--muted); margin-bottom:1.8rem; }
+
+  /* نوار پیشرفت تزئینی */
+  .bar{
+    height:6px; width:200px; max-width:80%; margin:0 auto 2rem;
+    background:var(--bg3); border-radius:100px; overflow:hidden;
+    border:1px solid var(--rim);
+  }
+  .bar-fill{
+    height:100%; width:40%; border-radius:100px;
+    background:linear-gradient(90deg,var(--gold2),var(--goldL));
+    animation:slide 1.8s ease-in-out infinite;
+  }
+  @keyframes slide{
+    0%{ transform:translateX(150%); }
+    50%{ transform:translateX(20%); }
+    100%{ transform:translateX(-150%); }
+  }
+
+  /* کارت اطلاعات تماس */
+  .info-card{
+    background:var(--card); border:1px solid var(--rim);
+    border-radius:14px; padding:1.3rem 1.4rem;
+    display:flex; gap:.8rem; align-items:flex-start; text-align:right;
+  }
+  .info-card .ic{
+    flex-shrink:0; width:38px; height:38px; border-radius:10px;
+    background:rgba(212,146,10,.12);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .info-card .ic svg{ width:18px; height:18px; stroke:var(--gold); }
+  .info-card .txt h3{ font-size:.92rem; font-weight:800; margin-bottom:.25rem; }
+  .info-card .txt p{ font-size:.83rem; line-height:1.8; color:var(--muted); }
+
+  .brand{ margin-top:2rem; font-size:.8rem; color:var(--faint); }
+  .brand b{ color:var(--muted); font-weight:700; }
+</style>
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="گرمابندی">
+<meta name="robots" content="noindex, nofollow">
+</head>
+<body>
+  <div class="wrap">
+    <div class="gear-box">
+      <div class="gear">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </div>
+    </div>
+
+    <h1>در حال <span>تعمیر و به‌روزرسانی</span> سایت هستیم</h1>
+    <p class="lead">
+      در حال ارتقای سایت برای تجربه‌ای بهتر هستیم.
+      لطفاً کمی بعد دوباره سر بزنید — به‌زودی بازمی‌گردیم.
+    </p>
+
+    <div class="bar"><div class="bar-fill"></div></div>
+
+    <div class="info-card">
+      <div class="ic">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path>
+        </svg>
+      </div>
+      <div class="txt">
+        <h3>کاری فوری دارید؟</h3>
+        <p>در صورت نیاز فوری می‌توانید از طریق راه‌های ارتباطی همیشگی با ما در تماس باشید. به‌زودی در دسترس خواهیم بود.</p>
+      </div>
+    </div>
+
+    <div class="brand"><b>گرمابندی ساختمان</b> — مرجع تخصصی عایق‌بندی حرارتی</div>
+  </div>
+</body>
+</html>

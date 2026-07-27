@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>پنل کاربری | گرمابندی ساختمان</title>
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="theme-color" content="#d49210">
+
+<!-- فونت محلی — بدون نیاز به اینترنت -->
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/styles.css">
+<script>(function(){var t=localStorage.getItem("tb_theme")||"light";document.documentElement.setAttribute("data-theme",t);})();</script>
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="گرمابندی">
+<meta name="robots" content="noindex, nofollow">
+</head>
+<body>
+<!-- FLOATING LIQUID GLASS NAV -->
+<div id="nav-wrap">
+<nav id="nav">
+  <div class="nav-logo" onclick="go('home')">
+    <div class="nav-gem"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0021 9c0-4.97-4.03-9-9-9z"/></svg></div>
+    <div class="nav-brand"><b>گرمابندی ساختمان</b><small>THERMAL ENG</small></div>
+  </div>
+  <div class="nav-sep"></div>
+  <div class="nav-links">
+    <a id="nl-home" onclick="go('home')" class="on">خانه</a>
+    <a id="nl-shop" onclick="go('shop')">فروشگاه</a>
+    <a id="nl-qr" onclick="go('qr')">اسکن QR</a>
+    <a id="nl-about" onclick="go('about')">درباره ما</a>
+    <a id="nl-contact" onclick="go('contact')">تماس</a>
+  </div>
+  <div class="nav-sp"></div>
+  <div class="nav-acts" id="navActs">
+    <button class="theme-tog" onclick="toggleTheme()" id="themeBtn"><i class="ico-slot" data-ic="moon"></i></button>
+    <button class="cart-btn" id="cartBtn" onclick="openCart()" title="سبد خرید">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+      <span class="cart-count" id="cartCount">0</span>
+    </button>
+    <button class="nb" onclick="openAuth('login')">ورود</button>
+    <button class="nb fill" onclick="openAuth('register')">ثبت‌نام</button>
+
+  </div>
+</nav>
+</div>
+<div id="toasts"></div>
+
+<!-- MOBILE BOTTOM TAB BAR — hidden on desktop via CSS -->
+<nav id="mob-tab-bar" aria-label="ناوبار موبایل">
+
+  <!-- QR Scan -->
+  <button class="mbt" id="mbt-qr" onclick="go('qr')" aria-label="اسکن QR">
+    <div class="mbt-ico"><i class="ico-slot" data-ic="camera"></i></div>
+    <span class="mbt-label">اسکن QR</span>
+  </button>
+
+  <!-- Shop -->
+  <button class="mbt" id="mbt-shop" onclick="go('shop')" aria-label="فروشگاه">
+    <div class="mbt-ico"><i class="ico-slot" data-ic="cart"></i></div>
+    <span class="mbt-label">فروشگاه</span>
+  </button>
+
+  <!-- Home — center, slightly elevated -->
+  <button class="mbt mbt-home-btn" id="mbt-home" onclick="go('home')" aria-label="خانه" style="position:relative;top:-6px">
+    <div class="mbt-ico mbt-home-ico"><i class="ico-slot" data-ic="home"></i></div>
+    <span class="mbt-label">خانه</span>
+  </button>
+
+  <!-- About Us -->
+  <button class="mbt" id="mbt-about" onclick="go('about')" aria-label="درباره ما">
+    <div class="mbt-ico"><i class="ico-slot" data-ic="info"></i></div>
+    <span class="mbt-label">درباره ما</span>
+  </button>
+
+  <!-- Contact Us -->
+  <button class="mbt" id="mbt-contact" onclick="go('contact')" aria-label="تماس">
+    <div class="mbt-ico"><i class="ico-slot" data-ic="mail"></i></div>
+    <span class="mbt-label">تماس</span>
+  </button>
+
+</nav>
+
+<!-- USER PANEL MOBILE NAV BAR — replaces #mob-tab-bar inside the dashboard -->
+<nav id="dash-tab-bar" aria-label="ناوبار پنل کاربری">
+
+  <!-- Home (rightmost in RTL) -->
+  <button class="dtb" id="dtb-home" onclick="go('home')" aria-label="خانه">
+    <div class="dtb-ico"><i class="ico-slot" data-ic="home"></i></div>
+    <span class="dtb-label">خانه</span>
+  </button>
+
+  <!-- My Purchases -->
+  <button class="dtb" id="dtb-pu" onclick="dashTab('pu')" aria-label="خریدهای من">
+    <div class="dtb-ico"><i class="ico-slot" data-ic="package"></i></div>
+    <span class="dtb-label">خریدها</span>
+  </button>
+
+  <!-- Recommendations -->
+  <button class="dtb" id="dtb-re" onclick="dashTab('re')" aria-label="پیشنهادات">
+    <div class="dtb-ico"><i class="ico-slot" data-ic="star"></i></div>
+    <span class="dtb-label">پیشنهادات</span>
+  </button>
+
+  <!-- Profile -->
+  <button class="dtb" id="dtb-pr" onclick="dashTab('pr')" aria-label="پروفایل">
+    <div class="dtb-ico"><i class="ico-slot" data-ic="user"></i></div>
+    <span class="dtb-label">پروفایل</span>
+  </button>
+
+  <!-- Support -->
+  <button class="dtb" id="dtb-sp" onclick="dashTab('sp')" aria-label="پشتیبانی">
+    <div class="dtb-ico"><i class="ico-slot" data-ic="message"></i></div>
+    <span class="dtb-label">پشتیبانی</span>
+  </button>
+
+  <!-- Logout — premium distinct style -->
+  <button class="dtb dtb-logout" id="dtb-logout" onclick="doLogout()" aria-label="خروج">
+    <div class="dtb-ico"><i class="ico-slot" data-ic="logout"></i></div>
+    <span class="dtb-label">خروج</span>
+  </button>
+
+</nav>
+<div class="cart-bd" id="cartBd" onclick="closeCart()"></div>
+<div class="cart-ovl" id="cartOvl">
+  <div class="cart-hd">
+    <h2><i class="ico-slot" data-ic="cart"></i> سبد خرید</h2>
+    <button class="cart-close" onclick="closeCart()"><i class="ico-slot" data-ic="x"></i></button>
+  </div>
+  <div class="cart-body" id="cartBody"></div>
+  <div class="cart-ft" id="cartFt" style="display:none">
+    <div class="cart-tot-row">
+      <span class="cart-tot-lbl">جمع کل:</span>
+      <span class="cart-tot-val" id="cartTot">۰ تومان</span>
+    </div>
+    <button class="cart-pay-btn" onclick="goCheckout()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      ادامه و پرداخت
+    </button>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div class="ovl" id="authOvl">
+  <div class="mdl">
+    <button class="mdl-x" onclick="closeOvl('authOvl')"><i class="ico-slot" data-ic="x"></i></button>
+    <div style="text-align:center;margin-bottom:1.2rem">
+      <div class="nav-gem" style="margin:0 auto .7rem;width:38px;height:38px;border-radius:10px"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0021 9c0-4.97-4.03-9-9-9z"/></svg></div>
+      <h2 style="font-size:1.15rem;font-weight:800;margin-bottom:.3rem">ورود / ثبت‌نام</h2>
+      <p style="font-size:12.5px;color:var(--muted)">شماره موبایل ایرانی + رمز عبور</p>
+    </div>
+    <div class="atabs"><button class="at on" id="atL" onclick="swA('login')">ورود</button><button class="at" id="atR" onclick="swA('register')">ثبت‌نام</button></div>
+    <div id="fL">
+      <div class="fld"><label>شماره موبایل</label><input id="lPh" type="tel" placeholder="09123456789"></div>
+      <div class="fld"><label>رمز عبور</label><input id="lPs" type="password" placeholder="••••••"></div>
+      <button class="btn-bl" id="btnL" onclick="doLogin()">ورود</button>
+    </div>
+    <div id="fR" style="display:none">
+      <div class="fld-row">
+        <div class="fld"><label>نام</label><input id="rFn" class="rtl" placeholder="نام" maxlength="10" oninput="filterFaName(this)"><small class="fld-hint">فقط فارسی — حروف انگلیسی مجاز نیست</small></div>
+        <div class="fld"><label>نام خانوادگی</label><input id="rLn" class="rtl" placeholder="نام خانوادگی" maxlength="15" oninput="filterFaName(this)"><small class="fld-hint">فقط فارسی — حروف انگلیسی مجاز نیست</small></div>
+      </div>
+      <div class="fld"><label>شماره موبایل</label><input id="rPh" type="tel" placeholder="09123456789"></div>
+      <div class="fld"><label>رمز عبور</label><input id="rPs" type="password" placeholder="••••••"></div>
+      <div class="fld"><label>تکرار رمز</label><input id="rPs2" type="password" placeholder="••••••"></div>
+      <button class="btn-bl" id="btnR" onclick="doRegister()">ساخت حساب</button>
+    </div>
+  </div>
+</div>
+
+<!-- BUY DIRECT MODAL -->
+<div class="ovl" id="buyOvl">
+  <div class="mdl">
+    <button class="mdl-x" onclick="closeOvl('buyOvl')"><i class="ico-slot" data-ic="x"></i></button>
+    <h2 id="buyTit" style="font-size:.95rem;font-weight:800;margin-bottom:.4rem"></h2>
+    <p id="buyDs" style="font-size:12.5px;color:var(--muted);margin-bottom:1rem;line-height:1.6"></p>
+    <div style="background:var(--bg3);border-radius:9px;padding:.9rem;margin-bottom:1rem"><div class="dp-row"><span id="buyPr" class="dp-new"></span><span class="dp-unit">تومان</span></div></div>
+    <div style="background:rgba(20,168,122,.07);border:1px solid rgba(20,168,122,.18);border-radius:8px;padding:.75rem;margin-bottom:1rem;font-size:12px;color:var(--green)"><i class="ico-slot" data-ic="check"></i> پس از پرداخت، دسترسی فوری به دانلود دارید</div>
+    <button class="btn-bl" id="btnBuy" onclick="doPay()">پرداخت و دانلود</button>
+    <p style="text-align:center;font-size:11px;color:var(--faint);margin-top:.6rem">پرداخت شبیه‌سازی‌شده (تست)</p>
+  </div>
+</div>
+
+<!-- CAMERA MODAL -->
+<div class="ovl" id="camOvl">
+  <div class="mdl cam-mdl">
+    <button class="mdl-x" onclick="closeCamera()"><i class="ico-slot" data-ic="x"></i></button>
+    <h2 style="font-size:1rem;font-weight:800;margin-bottom:.75rem"><i class="ico-slot" data-ic="camera"></i> اسکن QR با دوربین</h2>
+    <div class="cam-preview">
+      <div id="qrReader" class="qr-reader"></div>
+      <div class="cam-cr tl"></div><div class="cam-cr tr"></div>
+      <div class="cam-cr bl"></div><div class="cam-cr br"></div>
+      <div class="cam-scan"></div>
+      <div class="cam-stat" id="camStat">در حال اتصال به دوربین...</div>
+    </div>
+    <div class="cam-fallback" id="camFallback">دوربین در دسترس نیست — لطفاً کد QR را دستی وارد کنید</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:.75rem;text-align:center">کد QR روی کتاب را جلوی دوربین بگیرید</p>
+    <div style="display:flex;gap:8px">
+      <input id="camManInp" class="qr-inp" placeholder="یا کد را اینجا تایپ کنید..." style="flex:1" onkeydown="if(event.key==='Enter')camManual()">
+      <button onclick="camManual()" class="cta-a" style="padding:11px 16px;font-size:13px;flex-shrink:0">تأیید</button>
+    </div>
+  </div>
+</div>
+
+<!-- LEGAL ACCEPTANCE MODAL -->
+<div class="ovl" id="legalOvl">
+  <div class="mdl legal-mdl">
+    <button class="mdl-x" onclick="closeOvl('legalOvl')"><i class="ico-slot" data-ic="x"></i></button>
+    <div class="legal-mdl-hd">
+      <div class="legal-mdl-ico"><i class="ico-slot" data-ic="shield-lock" data-sz="22"></i></div>
+      <h2>قوانین کپی‌رایت</h2>
+      <p class="legal-mdl-sub">پیش از تکمیل خرید، لطفاً موافقت خود را اعلام کنید</p>
+    </div>
+    <div class="legal-mdl-body">
+      <div class="legal-point"><i class="ico-slot" data-ic="check"></i><span>تمام فایل‌ها مالکیت معنوی انحصاری این وب‌سایت است و تحت قانون حمایت از مؤلفان ایران و کنوانسیون برن محافظت می‌شود.</span></div>
+      <div class="legal-point"><i class="ico-slot" data-ic="check"></i><span>با خرید، یک مجوز محدود، غیرانحصاری و غیرقابل‌انتقال صرفاً برای استفاده شخصی و غیرتجاری به شما داده می‌شود.</span></div>
+      <div class="legal-point"><i class="ico-slot" data-ic="alert"></i><span>انتشار، فروش مجدد، یا اشتراک‌گذاری فایل‌ها با دیگران اکیداً ممنوع و نقض قانونی محسوب می‌شود.</span></div>
+    </div>
+    <a class="legal-readmore" onclick="go('terms')">خواندن تمام قوانین <i class="ico-slot" data-ic="arrow-left" data-sz="13"></i></a>
+    <button class="legal-accept-btn" id="legalAcceptBtn" onclick="acceptTerms()">
+      <i class="ico-slot" data-ic="check" data-sz="16"></i> پذیرش قوانین و ادامه
+    </button>
+  </div>
+</div>
+
+<!-- DOWNLOAD PROGRESS MODAL -->
+<div class="ovl" id="dlOvl">
+  <div class="mdl dl-mdl">
+    <div class="dl-mdl-hd">
+      <div class="dl-mdl-ico"><i class="ico-slot" data-ic="download" data-sz="22"></i></div>
+      <h2 id="dlTitle">در حال دانلود فایل</h2>
+      <p class="dl-mdl-sub" id="dlSub">لطفاً تا پایان دانلود صبر کنید…</p>
+    </div>
+    <div class="dl-progress-track"><div class="dl-progress-fill" id="dlFill"></div></div>
+    <div class="dl-stats">
+      <div class="dl-stat"><span class="dl-stat-lbl">دانلودشده</span><span class="dl-stat-val" id="dlDone">۰ MB</span></div>
+      <div class="dl-stat dl-stat-pct"><span class="dl-stat-val" id="dlPct">۰٪</span></div>
+      <div class="dl-stat dl-stat-rem"><span class="dl-stat-lbl">باقی‌مانده</span><span class="dl-stat-val" id="dlRemain">۰ MB</span></div>
+    </div>
+    <div class="dl-mdl-foot" id="dlFoot"></div>
+  </div>
+</div>
+
+<!-- TICKET CHAT MODAL -->
+<div class="ovl" id="tkChatOvl">
+  <div class="mdl tkchat-mdl">
+    <div class="tkchat-hd">
+      <button class="tkchat-back" onclick="closeTicketChat()" aria-label="بازگشت"><i class="ico-slot" data-ic="arrow-right"></i></button>
+      <div class="tkchat-hd-info">
+        <div class="tkchat-subj" id="tkChatSubj">—</div>
+        <div id="tkChatStatus"></div>
+      </div>
+      <button class="mdl-x" onclick="closeTicketChat()"><i class="ico-slot" data-ic="x"></i></button>
+    </div>
+    <div class="tkchat-body" id="tkChatBody"></div>
+    <div class="tkchat-foot">
+      <div class="tkchat-imgwrap" id="tkChatImgWrap">
+        <img id="tkChatImgPrev" src="" alt="">
+        <button class="tkchat-imgx" onclick="tkChatClearImg()"><i class="ico-slot" data-ic="x"></i></button>
+      </div>
+      <div class="tkchat-inputrow">
+        <label class="tkchat-attach" title="افزودن تصویر">
+          <input type="file" id="tkChatImg" accept="image/*" onchange="tkChatHandleImg(event)">
+          <i class="ico-slot" data-ic="image"></i>
+        </label>
+        <textarea id="tkChatMsg" rows="1" maxlength="250" placeholder="پاسخ خود را بنویسید…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendTicketReply();}"></textarea>
+        <button class="tkchat-send" id="tkChatSend" onclick="sendTicketReply()" aria-label="ارسال"><i class="ico-slot" data-ic="send"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HOME PAGE -->
+
+<div class="pg on" id="pgDash">
+  <div class="dash-wrap">
+    <aside class="d-side">
+      <div class="ds-prof"><div class="ds-av" id="dsAv">?</div><div class="ds-name-wrap"><div class="ds-name" id="dsName">—</div></div><div class="ds-ph" id="dsPh">—</div><div class="ds-rl" id="dsRl">کاربر</div></div>
+      <div class="d-nav">
+        <div class="di on" id="diPu" onclick="showDV('pu')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>خریدهای من</div>
+        <div class="di" id="diRe" onclick="showDV('re')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>پیشنهادات</div>
+        <div class="di" id="diPr" onclick="showDV('pr')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>پروفایل</div>
+        <div class="di" id="diSp" onclick="showDV('sp')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>پشتیبانی</div>
+        <div class="d-sep"></div>
+        <div class="di d-logout" onclick="doLogout()"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>خروج</div>
+      </div>
+    </aside>
+    <main class="d-main">
+      <!-- Mobile-only profile header (sidebar is hidden on mobile) -->
+      <div class="d-mob-prof" id="dMobProf">
+        <div class="dmp-av" id="dmpAv">?</div>
+        <div class="dmp-info">
+          <div class="dmp-name-wrap"><div class="dmp-name" id="dmpName">—</div></div>
+          <div class="dmp-ph" id="dmpPh">—</div>
+        </div>
+        <div class="dmp-rl" id="dmpRl">کاربر</div>
+      </div>
+      <div class="dv on" id="dvPu"><div class="dv-hd"><h2><i class="ico-slot" data-ic="package"></i> خریدهای من</h2></div><div id="puList" class="pu-lst"></div><div id="recsBoxW" style="display:none"><div class="recs-bx"><div class="recs-t"><i class="ico-slot" data-ic="bulb"></i> پیشنهاد بر اساس خریدهای شما</div><div class="recs-row" id="recsRow"></div></div></div></div>
+      <div class="dv" id="dvRe"><div class="dv-hd"><h2><i class="ico-slot" data-ic="star"></i> پیشنهادات</h2></div><p style="font-size:13px;color:var(--muted);margin-bottom:1rem">بر اساس خریدهای قبلی</p><div class="pg-grid" id="recsGrid"></div></div>
+      <div class="dv" id="dvPr">
+        <div class="dv-hd"><h2><i class="ico-slot" data-ic="user"></i> پروفایل</h2></div>
+        <div class="prof-grid">
+          <div class="pf"><label>نام</label><input id="pfFn" class="rtl" maxlength="10" oninput="filterFaName(this)"></div>
+          <div class="pf"><label>نام خانوادگی</label><input id="pfLn" class="rtl" maxlength="15" oninput="filterFaName(this)"></div>
+          <div class="pf pf-full"><label>شماره موبایل</label><input id="pfPh" readonly></div>
+          <div class="pf pf-full"><label>تاریخ عضویت</label><input id="pfDt" readonly></div>
+          <div class="pf pf-full"><label>تعداد خرید</label><div class="pf-num" id="pfCnt">—</div></div>
+        </div>
+        <button class="prof-save" onclick="savePro()">ذخیره تغییرات</button>
+      </div>
+      <!-- SUPPORT TICKETS VIEW -->
+      <div class="dv" id="dvSp">
+        <div class="dv-hd"><h2><i class="ico-slot" data-ic="message"></i> پشتیبانی</h2></div>
+        <div class="sp-grid">
+          <div class="sp-form-card">
+            <h3 class="sp-card-t">ارسال تیکت جدید</h3>
+            <div class="sp-prefill">
+              <div class="sp-pf-row"><span class="sp-pf-lbl">نام</span><span class="sp-pf-val" id="spName">—</span></div>
+              <div class="sp-pf-row"><span class="sp-pf-lbl">شماره موبایل</span><span class="sp-pf-val" id="spPhone">—</span></div>
+            </div>
+            <div class="sp-fld"><label>موضوع <span class="req">*</span></label>
+              <input id="spSubject" class="rtl" maxlength="120" placeholder="موضوع تیکت..."></div>
+            <div class="sp-fld"><label>تصویر پیوست <span class="hint">(اختیاری — فقط عکس)</span></label>
+              <div class="sp-file" id="spFileZone">
+                <input type="file" id="spImage" accept="image/*" onchange="spHandleImg(event)">
+                <div id="spFilePh"><i class="ico-slot" data-ic="image"></i><span>افزودن تصویر</span></div>
+                <div id="spFilePicked" class="sp-file-picked">
+                  <img id="spFileThumb" src="" alt="">
+                  <span id="spFileName" class="sp-file-nm">—</span>
+                  <button class="sp-file-x" onclick="spClearImg(event)"><i class="ico-slot" data-ic="x"></i></button>
+                </div>
+              </div>
+            </div>
+            <div class="sp-fld"><label>متن پیام <span class="req">*</span>
+              <span class="sp-count" id="spCount">۰ / ۲۵۰</span></label>
+              <textarea id="spMessage" maxlength="250" rows="5" placeholder="پیام خود را بنویسید... (حداکثر ۲۵۰ کاراکتر)" oninput="spUpdateCount()"></textarea></div>
+            <button class="sp-submit" id="spSubmitBtn" onclick="submitTicket()">
+              <i class="ico-slot" data-ic="send"></i> ارسال تیکت
+            </button>
+          </div>
+          <div class="sp-list-card">
+            <h3 class="sp-card-t">تیکت‌های من</h3>
+            <div id="spList" class="sp-list"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="assets/icons.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

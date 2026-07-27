@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard.html
+Disallow: /checkout.html
+Disallow: /admin.html
+Disallow: /maintenance.html
+Disallow: /api/
+Disallow: /uploads/
+
+Sitemap: https://garmabandi.ir/sitemap.xml

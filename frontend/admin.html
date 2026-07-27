@@ -1,0 +1,2124 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>پنل مدیریت | گرمابندی ساختمان</title>
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="theme-color" content="#d49210">
+
+<link rel="stylesheet" href="assets/fonts.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08090f;--bg2:#0f1219;--bg3:#161b26;--bg4:#1d2334;--bg5:#242c40;
+  --rim:rgba(255,255,255,0.045);--rim2:rgba(255,255,255,0.08);--rim3:rgba(255,255,255,0.14);
+  --text:#edeae2;--muted:#8a8680;--faint:#4a4845;
+  --gold:#d49210;--gold2:#b87a08;--goldL:#f0b030;--glow:rgba(212,146,10,0.12);
+  --green:#13b87a;--blue:#3578d6;--red:#d63535;--orange:#e07020;
+  --f:"Vazirmatn",sans-serif;
+  --adm-h:60px;
+  --card:#161b26;--card-bdr:rgba(255,255,255,.06);
+  --inp:#1d2334;--inp-bdr:rgba(255,255,255,.1);
+  --shadow:0 6px 28px rgba(0,0,0,.5);
+}
+/* ═══ ADMIN LIGHT MODE ═══ */
+[data-theme="light"]{
+  --bg:#f0f2f5;--bg2:#e8eaee;--bg3:#ffffff;--bg4:#f5f7fa;--bg5:#ffffff;
+  --rim:rgba(0,0,0,0.06);--rim2:rgba(0,0,0,0.09);--rim3:rgba(0,0,0,0.16);
+  --text:#1a1d26;--muted:#5e6272;--faint:#9ea3af;
+  --card:#ffffff;--card-bdr:rgba(0,0,0,0.07);
+  --inp:#f0f2f5;--inp-bdr:rgba(0,0,0,0.12);
+  --shadow:0 4px 20px rgba(0,0,0,0.08);
+}
+[data-theme="light"] body{color:var(--text)}
+[data-theme="light"] #adm-nav{background:rgba(255,255,255,0.92);border-bottom-color:rgba(212,146,10,.18);box-shadow:0 4px 24px rgba(0,0,0,.1)}
+[data-theme="light"] .adm-logo{background:rgba(212,146,10,.04);border-left-color:rgba(212,146,10,.15)}
+[data-theme="light"] .anl{color:var(--muted)}
+[data-theme="light"] .anl:hover{color:var(--text);background:rgba(0,0,0,.03)}
+[data-theme="light"] .anl.on{background:rgba(212,146,10,.07);color:#b87a08}
+[data-theme="light"] .adm-right{border-right-color:var(--rim2)}
+[data-theme="light"] .adm-who{background:var(--bg4);border-color:var(--rim2);color:var(--text)}
+[data-theme="light"] .adm-back{background:rgba(0,0,0,.04);border-color:var(--rim2);color:var(--muted)}
+[data-theme="light"] #adm-content{background:var(--bg)}
+[data-theme="light"] .av.on{background:var(--bg)}
+[data-theme="light"] .kpi{background:var(--card);border-color:var(--card-bdr)}
+[data-theme="light"] .prod-tbl,.prod-tbl-hd{background:var(--card);border-color:var(--card-bdr)}
+[data-theme="light"] .prod-tbl-hd{background:var(--bg4)}
+[data-theme="light"] .prod-row:hover{background:rgba(0,0,0,.022)}
+[data-theme="light"] .prod-thumb{background:var(--bg4)}
+[data-theme="light"] .ug,.ug-hd:hover,.ug-body{background:var(--card);border-color:var(--card-bdr)}
+[data-theme="light"] .ord-card{background:var(--card);border-color:var(--card-bdr)}
+[data-theme="light"] .mini-ord-card{background:var(--card);border-color:var(--card-bdr)}
+[data-theme="light"] .mdl,.create-box,.create-hd,.create-ft{background:var(--card);border-color:var(--card-bdr)}
+[data-theme="light"] .img-zone{background:var(--bg4);border-color:var(--rim2)}
+[data-theme="light"] .cf input,.cf select,.cf textarea{background:var(--inp);border-color:var(--inp-bdr);color:var(--text)}
+[data-theme="light"] .fld input,.fld select{background:var(--inp);border-color:var(--inp-bdr);color:var(--text)}
+[data-theme="light"] ::-webkit-scrollbar-track{background:var(--bg2)}
+[data-theme="light"] ::-webkit-scrollbar-thumb{background:var(--bg3)}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--f);direction:rtl;overflow-x:hidden}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px}
+button,input,select,textarea{font-family:var(--f)}
+
+/* ═══ ADMIN NAV — COMPLETELY SEPARATE FROM MAIN SITE ═══ */
+#adm-nav{
+  position:fixed;top:0;inset-inline:0;z-index:900;height:var(--adm-h);
+  display:flex;align-items:stretch;
+  background:linear-gradient(180deg,var(--bg3),var(--bg2));
+  border-bottom:1px solid rgba(212,146,10,0.22);
+  box-shadow:0 4px 24px rgba(0,0,0,.5);
+}
+.adm-logo{
+  display:flex;align-items:center;gap:10px;padding:0 1.4rem;
+  background:rgba(212,146,10,.04);border-left:1px solid rgba(212,146,10,.18);
+  flex-shrink:0;cursor:pointer;transition:background .2s
+}
+.adm-logo:hover{background:rgba(212,146,10,.08)}
+.adm-gem{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#d4920a,#923510);display:grid;place-items:center;position:relative;overflow:hidden;flex-shrink:0;box-shadow:0 2px 10px rgba(212,146,10,.35)}
+.adm-gem::after{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.22),transparent)}
+.adm-gem svg{width:17px;height:17px;fill:#000;position:relative;z-index:1}
+.adm-brand b{display:block;font-size:13px;font-weight:900;line-height:1.2;letter-spacing:-.01em}
+.adm-brand small{font-size:9px;color:var(--faint);letter-spacing:.08em;text-transform:uppercase}
+
+.adm-nav-items{display:flex;align-items:stretch;flex:1;padding:0 .5rem}
+.anl{display:flex;align-items:center;gap:7px;padding:0 1.1rem;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .2s;border-bottom:2.5px solid transparent;white-space:nowrap;position:relative;text-decoration:none}
+.anl svg{width:15px;height:15px;opacity:.6;transition:opacity .2s}
+.anl:hover{color:var(--text);background:rgba(255,255,255,.025)}
+.anl:hover svg{opacity:.9}
+.anl.on{color:var(--goldL);border-bottom-color:var(--gold);background:rgba(212,146,10,.045)}
+.anl.on svg{opacity:1}
+.adm-badge{background:var(--red);color:#fff;border-radius:100px;padding:1px 6px;font-size:9.5px;font-weight:800;line-height:1.4;display:none}
+.adm-badge.show{display:inline}
+.adm-sp{flex:1}
+.adm-right{display:flex;align-items:center;gap:8px;padding:0 1.2rem;border-right:1px solid var(--rim2)}
+
+/* CREATE BUTTON — prominent in nav */
+.adm-create-btn{
+  display:flex;align-items:center;gap:7px;padding:8px 18px;
+  background:var(--gold);color:#000;border:none;border-radius:9px;
+  font-size:13px;font-weight:800;cursor:pointer;transition:all .2s;
+  box-shadow:0 2px 12px rgba(212,146,10,.35)
+}
+.adm-create-btn:hover{background:var(--gold2);transform:translateY(-1px);box-shadow:0 4px 18px rgba(212,146,10,.45)}
+
+.adm-who{display:flex;align-items:center;gap:7px;padding:5px 12px 5px 8px;background:var(--bg4);border:1px solid var(--rim2);border-radius:100px;font-size:12px;font-weight:600}
+/* Theme toggle — simple CIRCLE button (matches the main site): the sun (light) /
+   moon (dark) icon cross-fades + rotates in place; pure-CSS swap via [data-theme]. */
+.adm-theme-tog{position:relative;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid var(--rim2);cursor:pointer;display:grid;place-items:center;flex-shrink:0;transition:background .2s,border-color .2s,transform .12s}
+[data-theme="light"] .adm-theme-tog{background:rgba(0,0,0,.045)}
+.adm-theme-tog:hover{background:rgba(212,146,10,.12);border-color:rgba(212,146,10,.45)}
+.adm-theme-tog:active{transform:scale(.9)}
+.adm-theme-tog:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.adm-theme-tog .tt-ic{grid-area:1/1;display:flex;align-items:center;justify-content:center;transition:opacity .35s ease,transform .45s cubic-bezier(.4,0,.2,1)}
+.adm-theme-tog .tt-ic svg{width:17px;height:17px}
+.adm-theme-tog .tt-sun{color:var(--gold)}
+.adm-theme-tog .tt-moon{color:var(--goldL)}
+[data-theme="light"] .adm-theme-tog .tt-sun{opacity:1;transform:rotate(0) scale(1)}
+[data-theme="light"] .adm-theme-tog .tt-moon{opacity:0;transform:rotate(90deg) scale(.4)}
+[data-theme="dark"]  .adm-theme-tog .tt-moon{opacity:1;transform:rotate(0) scale(1)}
+[data-theme="dark"]  .adm-theme-tog .tt-sun{opacity:0;transform:rotate(-90deg) scale(.4)}
+.adm-dot{width:7px;height:7px;background:var(--green);border-radius:50%;box-shadow:0 0 5px var(--green)}
+.adm-back{display:flex;align-items:center;gap:5px;padding:7px 13px;background:rgba(255,255,255,.04);border:1px solid var(--rim2);color:var(--muted);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none}
+.adm-back:hover{background:rgba(255,255,255,.07);color:var(--text)}
+
+/* ═══ LAYOUT ═══ */
+#adm-content{padding-top:var(--adm-h);min-height:100vh}
+.av{display:none;animation:fadIn .25s ease}.av.on{display:block}
+@keyframes fadIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.adm-pg{max-width:1220px;margin:0 auto;padding:2rem 1.5rem}
+.adm-pg-hd{display:flex;align-items:center;gap:.75rem;margin-bottom:2rem}
+.adm-pg-ico{width:44px;height:44px;border-radius:12px;background:rgba(212,146,10,.09);border:1px solid rgba(212,146,10,.18);display:grid;place-items:center;font-size:1.2rem;flex-shrink:0}
+.adm-pg-hd h1{font-size:1.25rem;font-weight:900}
+.adm-pg-hd p{font-size:13px;color:var(--muted);margin-top:3px}
+
+/* TOASTS */
+#toasts{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:7px;align-items:center;pointer-events:none}
+.tst{padding:10px 18px;border-radius:10px;font-size:12.5px;font-weight:600;backdrop-filter:blur(16px);animation:tIn .3s ease;white-space:nowrap;pointer-events:none;border:1px solid rgba(255,255,255,.1)}
+.tst.ok{background:rgba(19,184,122,.9);color:#fff}.tst.err{background:rgba(214,53,53,.9);color:#fff}.tst.nfo{background:rgba(53,120,214,.9);color:#fff}
+@keyframes tIn{from{opacity:0;transform:translateY(8px) scale(.95)}to{opacity:1;transform:none}}
+
+/* KPI STRIP */
+.kpi-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:.9rem;margin-bottom:2rem}
+.kpi{background:var(--bg3);border:1px solid var(--rim2);border-radius:14px;padding:1.1rem;position:relative;overflow:hidden;transition:transform .2s}
+.kpi:hover{transform:translateY(-2px)}
+.kpi::before{content:"";position:absolute;top:0;left:0;right:0;height:2.5px;border-radius:14px 14px 0 0}
+.kpi.gold::before{background:linear-gradient(90deg,var(--gold),var(--goldL))}.kpi.green::before{background:var(--green)}.kpi.blue::before{background:var(--blue)}.kpi.red::before{background:var(--red)}.kpi.orange::before{background:var(--orange)}
+.kpi-ico{font-size:1.4rem;margin-bottom:.5rem;opacity:.65}
+.kpi-n{font-size:1.6rem;font-weight:900;line-height:1;color:var(--goldL)}
+.kpi.green .kpi-n{color:var(--green)}.kpi.blue .kpi-n{color:var(--blue)}.kpi.red .kpi-n{color:var(--red)}.kpi.orange .kpi-n{color:var(--orange)}
+.kpi-l{font-size:11px;color:var(--muted);margin-top:4px}
+
+/* ═══ CREATE PRODUCT MODAL — NEAR FULL-SCREEN ═══ */
+.create-ovl{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.85);backdrop-filter:blur(12px);display:none;align-items:center;justify-content:center;padding:1rem}
+.create-ovl.on{display:flex}
+.create-box{
+  background:var(--bg3);border:1px solid var(--rim2);border-radius:24px;
+  width:min(860px,96vw);max-height:92vh;overflow-y:auto;position:relative;
+  box-shadow:0 40px 80px rgba(0,0,0,.65);animation:cboxIn .3s ease
+}
+@keyframes cboxIn{from{opacity:0;scale:.96;translate:0 20px}to{opacity:1;scale:1;translate:0 0}}
+.create-hd{
+  display:flex;align-items:center;justify-content:space-between;padding:1.6rem 2rem;
+  border-bottom:1px solid var(--rim2);position:sticky;top:0;
+  background:var(--bg3);border-radius:24px 24px 0 0;z-index:1;
+  backdrop-filter:blur(12px)
+}
+.create-hd-l{display:flex;align-items:center;gap:10px}
+.create-hd-l h2{font-size:1.05rem;font-weight:800}
+.create-hd-l span{font-size:12px;color:var(--muted)}
+.create-x{width:32px;height:32px;background:var(--bg4);border:1px solid var(--rim);border-radius:8px;cursor:pointer;display:grid;place-items:center;font-size:14px;color:var(--muted);transition:all .2s}
+.create-x:hover{background:var(--bg2);color:var(--text)}
+.create-body{padding:2rem}
+.cf-g{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.cf-full{grid-column:1/-1}
+.cf label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600;letter-spacing:.03em}
+.cf label .req{color:var(--red)}
+.cf label .hint{color:var(--faint);font-weight:400}
+.cf input,.cf select,.cf textarea{width:100%;background:var(--bg4);border:1px solid var(--rim2);border-radius:9px;padding:10px 13px;color:var(--text);font-size:13px;outline:none;transition:border-color .2s}
+.cf input:focus,.cf select:focus,.cf textarea:focus{border-color:rgba(212,146,10,.45)}
+.cf select option{background:var(--bg3)}
+.cf textarea{resize:vertical;min-height:80px;direction:rtl}
+.cf input.rtl{direction:rtl}
+.cf input.ltr{direction:ltr;text-align:left}
+
+/* IMAGE UPLOAD ZONE */
+.img-zone{border:2px dashed var(--rim2);border-radius:13px;padding:2rem;text-align:center;cursor:pointer;transition:all .3s;position:relative;background:var(--bg4);margin-bottom:0}
+.img-zone:hover,.img-zone.drag{border-color:var(--gold);background:rgba(212,146,10,.04)}
+.img-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.img-zone-ico{font-size:2.2rem;margin-bottom:.65rem;opacity:.45}
+.img-zone-txt{font-size:13px;color:var(--muted)}
+.img-zone-txt strong{color:var(--goldL)}
+.img-zone-sub{font-size:11px;color:var(--faint);margin-top:.3rem}
+.img-pvw{position:relative;border-radius:11px;overflow:hidden;display:none}
+.img-pvw img{width:100%;height:200px;object-fit:cover;filter:blur(9px) brightness(.58);pointer-events:none;user-select:none;-webkit-user-drag:none}
+.img-pvw-badge{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+.img-pvw-badge .badge-lbl{font-size:12px;color:rgba(255,255,255,.6);font-weight:700;background:rgba(0,0,0,.5);padding:4px 12px;border-radius:100px}
+.img-pvw-badge .badge-chg{padding:6px 14px;background:rgba(212,146,10,.15);border:1px solid rgba(212,146,10,.3);color:var(--goldL);border-radius:7px;font-size:12px;cursor:pointer;transition:all .2s}
+.img-pvw-badge .badge-chg:hover{background:rgba(212,146,10,.28)}
+
+.create-ft{display:flex;align-items:center;justify-content:space-between;padding:1.3rem 2rem;border-top:1px solid var(--rim2);position:sticky;bottom:0;background:var(--bg3);border-radius:0 0 24px 24px}
+.create-ft-note{font-size:12px;color:var(--muted)}
+.create-ft-acts{display:flex;gap:8px}
+.btn-cancel{padding:10px 20px;background:transparent;border:1px solid var(--rim2);color:var(--muted);border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-cancel:hover{background:var(--bg4);color:var(--text)}
+.btn-create{padding:10px 24px;background:var(--gold);color:#000;border:none;border-radius:9px;font-size:13px;font-weight:800;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:7px}
+.btn-create:hover{background:var(--gold2)}.btn-create:disabled{opacity:.5;cursor:not-allowed}
+
+/* ═══ PRODUCT MANAGEMENT PAGE (ADMIN-DISTINCT UI) ═══ */
+.mgmt-bar{display:flex;gap:10px;margin-bottom:1.5rem;align-items:center;flex-wrap:wrap}
+.mgmt-search{flex:1;min-width:240px;position:relative}
+.mgmt-search input{width:100%;background:var(--bg3);border:1px solid var(--rim2);border-radius:10px;padding:9px 38px 9px 14px;color:var(--text);font-size:13px;outline:none;transition:border-color .2s;direction:rtl}
+.mgmt-search input:focus{border-color:rgba(212,146,10,.35)}
+.mgmt-search svg{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--faint)}
+.mgmt-filters{display:flex;gap:6px;flex-wrap:wrap}
+.mf{padding:7px 13px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--rim2);background:transparent;color:var(--muted);transition:all .2s}
+.mf:hover{background:var(--bg3);color:var(--text)}
+.mf.on{background:rgba(212,146,10,.1);border-color:rgba(212,146,10,.28);color:var(--goldL)}
+.mf-stats{font-size:11px;color:var(--faint);margin-right:auto;padding-right:.5rem}
+
+/* PRODUCT ROWS (COMPLETELY DIFFERENT FROM SHOP CARDS) */
+.prod-tbl{background:var(--bg3);border:1px solid var(--rim2);border-radius:16px;overflow:hidden}
+.prod-tbl-hd{display:grid;grid-template-columns:56px 1fr 100px 90px 80px 90px 160px;gap:.8rem;align-items:center;padding:.8rem 1.2rem;border-bottom:1.5px solid var(--rim2);background:var(--bg4)}
+.prod-tbl-hd span{font-size:10.5px;font-weight:700;color:var(--faint);letter-spacing:.06em;text-transform:uppercase}
+.prod-row{display:grid;grid-template-columns:56px 1fr 100px 90px 80px 90px 160px;gap:.8rem;align-items:center;padding:.8rem 1.2rem;border-bottom:1px solid var(--rim);transition:background .18s}
+.prod-row:last-child{border:none}
+.prod-row:hover{background:rgba(255,255,255,.022)}
+.prod-thumb{width:46px;height:46px;border-radius:8px;background:var(--bg4);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;flex-shrink:0;font-size:1.2rem}
+.prod-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:blur(3px) brightness(.65)}
+.prod-thumb-ico{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.prod-info .nm{font-size:13px;font-weight:700;line-height:1.3;margin-bottom:2px}
+.prod-info .id{font-size:9.5px;color:var(--faint);font-family:monospace;letter-spacing:.03em}
+.type-tag{display:inline-block;padding:2px 8px;border-radius:5px;font-size:10.5px;font-weight:700}
+.tt-book{background:rgba(19,184,122,.1);color:var(--green)}
+.tt-chapter{background:rgba(53,120,214,.1);color:var(--blue)}
+.tt-image{background:rgba(212,146,10,.1);color:var(--gold)}
+.tt-article{background:rgba(200,180,140,.1);color:#c8a870}
+.prod-price{font-size:13.5px;font-weight:700;color:var(--goldL)}
+.disc-tag{display:inline-block;padding:2px 8px;border-radius:5px;font-size:10.5px;font-weight:700;background:rgba(19,184,122,.1);color:var(--green)}
+.feat-tag{display:inline-block;padding:2px 8px;border-radius:5px;font-size:10.5px;font-weight:700;background:rgba(212,146,10,.1);color:var(--gold)}
+.prod-acts{display:flex;gap:5px}
+.a-e{padding:5px 10px;background:rgba(53,120,214,.1);border:1px solid rgba(53,120,214,.2);color:var(--blue);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s}
+.a-e:hover{background:var(--blue);color:#fff}
+.a-d{padding:5px 10px;background:rgba(19,184,122,.1);border:1px solid rgba(19,184,122,.2);color:var(--green);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s}
+.a-d:hover{background:var(--green);color:#fff}
+.a-x{padding:5px 10px;background:rgba(214,53,53,.1);border:1px solid rgba(214,53,53,.2);color:var(--red);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s}
+.a-x:hover{background:var(--red);color:#fff}
+
+/* ═══ ORDERS PAGE WITH PAYMENT ISSUES ═══ */
+.ord-issue-banner{background:rgba(214,53,53,.07);border:1px solid rgba(214,53,53,.2);border-radius:13px;padding:1rem 1.2rem;margin-bottom:1.2rem;display:none;align-items:center;gap:.75rem}
+.ord-issue-banner.show{display:flex}
+.oib-ico{font-size:1.4rem}
+.oib-txt h4{font-size:13.5px;font-weight:700;color:var(--red);margin-bottom:2px}
+.oib-txt p{font-size:12px;color:var(--muted)}
+.ord-ftabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.3rem}
+.oft{display:flex;align-items:center;gap:5px;padding:8px 15px;border-radius:9px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid var(--rim2);background:transparent;color:var(--muted);transition:all .2s}
+.oft:hover{background:var(--bg3);color:var(--text)}
+.oft.on{background:rgba(212,146,10,.1);border-color:rgba(212,146,10,.28);color:var(--goldL)}
+.oft.fail-tab.on{background:rgba(214,53,53,.1);border-color:rgba(214,53,53,.28);color:var(--red)}
+.oft.pend-tab.on{background:rgba(224,112,32,.1);border-color:rgba(224,112,32,.28);color:var(--orange)}
+.ord-cnt-badge{background:rgba(255,255,255,.08);padding:1px 6px;border-radius:100px;font-size:10px}
+.oft.on .ord-cnt-badge{background:rgba(0,0,0,.15)}
+.ord-items{display:flex;flex-direction:column;gap:.8rem}
+.ord-card{background:var(--bg3);border:1px solid var(--rim2);border-radius:13px;padding:1rem 1.2rem;display:flex;align-items:center;gap:1rem;transition:all .2s}
+.ord-card:hover{border-color:var(--rim3)}
+.ord-card.failed{border-color:rgba(214,53,53,.22);background:rgba(214,53,53,.04)}
+.ord-card.pending{border-color:rgba(224,112,32,.18);background:rgba(224,112,32,.03)}
+.ord-status-ring{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;font-size:1.3rem;flex-shrink:0}
+.paid-ring{background:rgba(19,184,122,.1)}
+.failed-ring{background:rgba(214,53,53,.1)}
+.pending-ring{background:rgba(224,112,32,.1)}
+.ord-meta{flex:1}
+.ord-nm{font-size:13.5px;font-weight:700;margin-bottom:3px}
+.ord-sub{font-size:12px;color:var(--muted)}
+.ord-ref{font-size:10px;color:var(--faint);margin-top:2px;font-family:monospace}
+.ord-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+.ord-amt{font-size:14px;font-weight:800;color:var(--goldL)}
+.ord-stag{padding:3px 9px;border-radius:6px;font-size:10.5px;font-weight:700}
+.paid-stag{background:rgba(19,184,122,.1);color:var(--green)}
+.failed-stag{background:rgba(214,53,53,.1);color:var(--red)}
+.pending-stag{background:rgba(224,112,32,.1);color:var(--orange)}
+.ord-date{font-size:11px;color:var(--faint)}
+.retry-btn{padding:4px 10px;background:rgba(214,53,53,.1);border:1px solid rgba(214,53,53,.2);color:var(--red);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s}
+.retry-btn:hover{background:var(--red);color:#fff}
+
+/* ═══ USERS & GROUPS (PRESERVED DESIGN) ═══ */
+.ug{background:var(--bg3);border:1px solid var(--rim2);border-radius:13px;margin-bottom:.9rem;overflow:hidden;transition:border-color .2s}
+.ug:hover{border-color:var(--rim3)}
+.ug-hd{display:flex;align-items:center;gap:1rem;padding:.9rem 1.1rem;cursor:pointer;transition:background .2s}
+.ug-hd:hover{background:rgba(255,255,255,.02)}
+.ug-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#a04010);display:grid;place-items:center;font-size:12px;font-weight:800;color:#000;flex-shrink:0}
+.ug-ph{font-size:13px;font-weight:700}
+.ug-nm{font-size:11.5px;color:var(--muted);margin-top:2px}
+.ug-sp{flex:1}
+.ug-stats{display:flex;gap:1rem;flex-shrink:0}
+.ug-stat{text-align:center}
+.ug-stat b{display:block;font-size:14px;font-weight:800;color:var(--goldL)}
+.ug-stat small{font-size:10px;color:var(--faint)}
+.ug-arr{color:var(--faint);transition:transform .2s;flex-shrink:0;margin-right:.5rem}
+.ug-body{border-top:1px solid var(--rim);display:none}
+.ug-body.open{display:block}
+.ug-ord{display:flex;align-items:center;gap:.8rem;padding:.75rem 1.1rem;border-bottom:1px solid var(--rim);font-size:12.5px}
+.ug-ord:last-child{border:none}
+.ug-ord-nm{flex:1;color:var(--muted)}
+.ug-ord-amt{color:var(--goldL);font-weight:700;font-size:12px}
+.ug-stag{padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700}
+.ugs-ok{background:rgba(19,184,122,.1);color:var(--green)}
+.ugs-fail{background:rgba(214,53,53,.1);color:var(--red)}
+.ugs-pend{background:rgba(224,112,32,.1);color:var(--orange)}
+.adm-badge-admin{background:rgba(212,146,10,.12);border:1px solid rgba(212,146,10,.22);color:var(--goldL);padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;margin-right:6px}
+
+/* DASH 2-COL */
+.dash-2col{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+.d2-sec{font-size:13px;font-weight:700;color:var(--muted);margin-bottom:.8rem;display:flex;align-items:center;gap:.5rem}
+.mini-ord-card{background:var(--bg3);border:1px solid var(--rim2);border-radius:10px;padding:.8rem;display:flex;align-items:center;gap:.8rem;margin-bottom:.6rem;transition:all .2s}
+.mini-ord-card:hover{border-color:var(--rim3)}
+.mini-ord-card.issue{border-color:rgba(214,53,53,.2);background:rgba(214,53,53,.03)}
+
+/* OVERLAYS */
+.ovl{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.8);backdrop-filter:blur(8px);display:none;place-items:center;padding:1rem}
+.ovl.on{display:grid}
+.mdl{background:var(--bg3);border:1px solid var(--rim2);border-radius:18px;padding:2rem;width:420px;max-width:100%;position:relative;animation:mIn .25s ease;box-shadow:0 30px 60px rgba(0,0,0,.5)}
+@keyframes mIn{from{opacity:0;scale:.95}to{opacity:1;scale:1}}
+.mdl-x{position:absolute;top:12px;left:12px;width:28px;height:28px;background:var(--bg4);border:1px solid var(--rim);border-radius:7px;cursor:pointer;display:grid;place-items:center;font-size:13px;color:var(--muted)}
+.mdl-x:hover{background:var(--bg2);color:var(--text)}
+.fld{margin-bottom:.85rem}
+.fld label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600}
+.fld input,.fld select{width:100%;background:var(--bg4);border:1px solid var(--rim2);border-radius:8px;padding:10px 12px;color:var(--text);font-size:13px;outline:none;transition:border-color .2s}
+.fld input:focus,.fld select:focus{border-color:rgba(212,146,10,.4)}
+.btn-bl{width:100%;padding:12px;background:var(--gold);color:#000;border:none;border-radius:8px;font-size:13.5px;font-weight:800;cursor:pointer;transition:all .2s;margin-top:5px}
+.btn-bl:hover{background:var(--gold2)}
+
+/* AUTH GATE */
+.auth-gate{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:1.2rem;padding:2rem;text-align:center}
+.ag-ico{font-size:3.5rem;opacity:.35;margin-bottom:.5rem}
+.ag-h{font-size:1.5rem;font-weight:900}
+.ag-p{font-size:14px;color:var(--muted);max-width:360px;line-height:1.7}
+.ag-form{background:var(--bg3);border:1px solid var(--rim2);border-radius:18px;padding:2rem;width:340px;max-width:100%;box-shadow:0 20px 50px rgba(0,0,0,.4)}
+
+/* EMPTY */
+.empty{text-align:center;padding:3rem 1rem;color:var(--faint)}
+.empty-i{font-size:2.5rem;margin-bottom:.75rem;opacity:.4}
+
+/* RESP */
+@media(max-width:1100px){.prod-tbl-hd,.prod-row{grid-template-columns:56px 1fr 100px 90px 90px 160px}.prod-tbl-hd span:nth-child(5),.prod-row>:nth-child(5){display:none}}
+@media(max-width:900px){
+  .kpi-strip{grid-template-columns:repeat(3,1fr)}.dash-2col{grid-template-columns:1fr}
+  .adm-brand small{display:none}.adm-brand b{font-size:12px}
+  .mgmt-bar{flex-wrap:wrap}.mgmt-search{min-width:200px}
+  .prod-tbl-hd,.prod-row{grid-template-columns:44px 1fr 90px 80px 140px}
+  .prod-tbl-hd span:nth-child(4),.prod-row>:nth-child(4){display:none}
+}
+@media(max-width:700px){
+  .kpi-strip{grid-template-columns:repeat(2,1fr)}
+  .anl .anl-txt{display:none}
+  #adm-nav{overflow-x:auto}
+  .adm-nav-items{min-width:max-content}
+  .adm-right{gap:6px;padding:0 .75rem}
+  .adm-create-btn span{display:none}
+  .adm-create-btn{padding:8px 12px}
+  .adm-pg{padding:1.2rem 1rem}
+  .create-box{width:100vw;max-height:100vh;border-radius:18px 18px 0 0;position:fixed;bottom:0;top:auto}
+  .create-modal{align-items:flex-end;padding:0}
+  .cf-g{grid-template-columns:1fr}
+  .ug-stats{gap:.6rem}.ug-stat b{font-size:13px}
+  .ord-card{flex-wrap:wrap}.ord-right{width:100%;flex-direction:row;justify-content:space-between;padding-top:.4rem;border-top:1px solid var(--rim)}
+  .mgmt-filters{display:none}
+}
+@media(max-width:480px){
+  .kpi-strip{grid-template-columns:1fr 1fr;gap:.65rem}
+  .kpi-n{font-size:1.3rem}
+  .adm-pg-hd h1{font-size:1.1rem}
+  .prod-tbl{display:none}
+  .prod-cards-mobile{display:flex!important;flex-direction:column;gap:.65rem}
+}
+
+.ic{display:inline-block;vertical-align:-.16em;flex-shrink:0;line-height:0}
+.ico-slot{display:inline-flex;align-items:center;justify-content:center;vertical-align:-.16em;line-height:0;width:1em;height:1em}
+.ico-slot.ico-ready{width:auto;height:auto}
+.ico-slot .ic{display:block}
+/* ─── Digital file upload zone ─── */
+.file-zone{position:relative;border:1.5px dashed var(--rim3);border-radius:12px;background:var(--bg4);
+  padding:1.2rem;cursor:pointer;transition:border-color .2s,background .2s}
+.file-zone:hover{border-color:rgba(212,146,10,.4)}
+.file-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.file-zone-ico{width:42px;height:42px;margin:0 auto .5rem;border-radius:10px;
+  background:rgba(212,146,10,.12);display:flex;align-items:center;justify-content:center;color:var(--gold)}
+.file-zone-txt{text-align:center;font-size:12.5px;color:var(--muted);line-height:1.7}
+.file-zone-txt strong{color:var(--text)}
+.file-zone-sub{text-align:center;font-size:11px;color:var(--faint);margin-top:.35rem}
+.file-picked{display:none;align-items:center;gap:.8rem;background:rgba(20,168,122,.08);
+  border:1px solid rgba(20,168,122,.22);border-radius:9px;padding:.7rem .85rem}
+.file-picked-ico{flex-shrink:0;width:34px;height:34px;border-radius:8px;
+  background:rgba(20,168,122,.15);display:flex;align-items:center;justify-content:center;color:var(--green)}
+.file-picked-inf{flex:1;min-width:0}
+.file-picked-nm{font-size:12.5px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-picked-sz{font-size:11px;color:var(--muted);margin-top:2px}
+.file-picked-x{flex-shrink:0;background:none;border:none;color:var(--muted);cursor:pointer;
+  width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center}
+.file-picked-x:hover{background:rgba(216,53,53,.12);color:var(--red)}
+
+/* ─── Terms-acceptance badge in user list ─── */
+.ug-terms{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;
+  padding:2px 8px;border-radius:100px;margin-top:4px}
+.ug-terms .ico-slot{width:11px;height:11px}
+.ut-yes{background:rgba(20,168,122,.13);color:var(--green)}
+.ut-no{background:rgba(216,53,53,.13);color:var(--red)}
+
+@media(max-width:640px){
+  .file-zone{padding:1rem}
+  .file-picked-nm{font-size:11.5px}
+}
+/* ─── Bundle picker + cards ─── */
+.bundle-picker{display:flex;flex-direction:column;gap:.4rem;max-height:240px;overflow-y:auto;border:1px solid var(--rim2);border-radius:9px;padding:.5rem;background:var(--bg4)}
+.bundle-pick{display:flex;align-items:center;gap:.6rem;padding:.5rem .6rem;border-radius:7px;cursor:pointer;transition:background .15s;font-size:12.5px}
+.bundle-pick:hover{background:var(--bg3)}
+.bundle-pick.picked{background:rgba(212,146,10,.1)}
+.bundle-pick input{accent-color:var(--gold);width:15px;height:15px;flex-shrink:0}
+.bp-tp{font-size:10px;font-weight:700;color:var(--faint);background:var(--bg3);padding:2px 7px;border-radius:5px;flex-shrink:0}
+.bp-nm{flex:1;min-width:0;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bp-pr{color:var(--gold);font-weight:700;flex-shrink:0}
+.bundle-pick-empty{padding:1rem;text-align:center;color:var(--faint);font-size:12px}
+.bundle-sum{margin-top:.6rem;font-size:11.5px;color:var(--muted);font-weight:600;background:var(--bg3);border-radius:7px;padding:.5rem .7rem}
+.bundle-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;margin-top:1.25rem}
+.bundle-card{background:var(--card);border:1px solid var(--card-bdr);border-radius:12px;padding:1rem}
+.bundle-card-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;margin-bottom:.7rem}
+.bundle-card-t{font-size:13.5px;font-weight:800;color:var(--text)}
+.bundle-del{background:none;border:none;color:var(--muted);cursor:pointer;width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.bundle-del:hover{background:rgba(216,53,53,.12);color:var(--red)}
+.bundle-card-items{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.8rem}
+.bundle-chip{font-size:10.5px;background:var(--bg3);border:1px solid var(--rim);color:var(--muted);padding:3px 8px;border-radius:6px}
+.bundle-card-ft{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.bundle-price{font-size:15px;font-weight:900;color:var(--gold)}
+.bundle-orig{font-size:11px;color:var(--faint);text-decoration:line-through}
+.bundle-save{font-size:10px;font-weight:800;background:rgba(20,168,122,.15);color:var(--green);padding:2px 7px;border-radius:5px}
+
+/* ─── Admin support tickets ─── */
+.tkadm-ftabs{display:flex;gap:.5rem;margin-bottom:1.25rem;flex-wrap:wrap}
+.tkf{display:flex;align-items:center;gap:.35rem;background:var(--bg4);border:1px solid var(--rim2);color:var(--muted);border-radius:8px;padding:.5rem .9rem;font-size:12px;font-weight:700;font-family:var(--f);cursor:pointer}
+.tkf.on{background:rgba(212,146,10,.13);border-color:rgba(212,146,10,.3);color:var(--gold)}
+.tkadm-list{display:flex;flex-direction:column;gap:1rem}
+.tkadm{background:var(--card);border:1px solid var(--card-bdr);border-radius:12px;padding:1.1rem}
+.tkadm-hd{display:flex;justify-content:space-between;align-items:center;gap:.6rem;margin-bottom:.7rem}
+.tkadm-user{display:flex;align-items:center;gap:.6rem}
+.tkadm-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(145deg,var(--gold),var(--gold2));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0}
+.tkadm-nm{font-size:12.5px;font-weight:800;color:var(--text)}
+.tkadm-ph{font-size:11px;color:var(--faint)}
+.tkadm-subj{font-size:13px;font-weight:800;color:var(--text);margin-bottom:.4rem}
+.tkadm-msg{font-size:12px;line-height:1.8;color:var(--muted);white-space:pre-wrap;word-break:break-word}
+.tkadm-img{margin-top:.5rem;max-width:140px;max-height:100px;border-radius:8px;cursor:pointer;border:1px solid var(--rim2)}
+.tkadm-date{font-size:10.5px;color:var(--faint);margin-top:.5rem}
+.tkadm-actions{margin-top:.8rem;border-top:1px solid var(--rim);padding-top:.8rem}
+.tkadm-reply-in{width:100%;background:var(--bg4);border:1px solid var(--rim2);border-radius:8px;padding:8px 10px;color:var(--text);font-family:var(--f);font-size:12px;box-sizing:border-box;resize:vertical}
+.tkadm-reply-in:focus{outline:none;border-color:var(--gold)}
+.tkadm-btns{display:flex;gap:.5rem;margin-top:.6rem}
+.tkadm-send{display:flex;align-items:center;gap:.3rem;background:linear-gradient(145deg,var(--gold),var(--gold2));color:#fff;border:none;border-radius:7px;padding:.5rem 1rem;font-size:12px;font-weight:700;font-family:var(--f);cursor:pointer}
+.tkadm-close{background:var(--bg4);border:1px solid var(--rim2);color:var(--muted);border-radius:7px;padding:.5rem 1rem;font-size:12px;font-weight:700;font-family:var(--f);cursor:pointer}
+.tk-badge{font-size:9.5px;font-weight:800;padding:3px 9px;border-radius:100px;white-space:nowrap}
+.tk-open{background:rgba(212,146,10,.14);color:var(--gold)}
+.tk-answered{background:rgba(20,168,122,.14);color:var(--green)}
+.tk-closed{background:rgba(120,130,150,.16);color:var(--muted)}
+.tk-reply{margin-top:.7rem;background:rgba(20,168,122,.07);border:1px solid rgba(20,168,122,.2);border-radius:9px;padding:.65rem .8rem}
+.tk-reply-h{display:flex;align-items:center;gap:.3rem;font-size:11px;font-weight:800;color:var(--green);margin-bottom:.35rem}
+.tk-reply-b{font-size:12px;line-height:1.8;color:var(--muted);white-space:pre-wrap}
+.tk-waiting{background:rgba(53,128,216,.14);color:var(--blue)}
+/* ─── Admin ticket cards (clickable, open the chat) ─── */
+.tkadm-card{display:flex;align-items:stretch;gap:.7rem;background:var(--card);border:1px solid var(--card-bdr);border-radius:12px;padding:.9rem 1rem;transition:border-color .18s,transform .12s}
+.tkadm-card:hover{border-color:rgba(212,146,10,.3)}
+.tkadm-card.is-closed{opacity:.72}
+.tkadm-card-body{display:flex;align-items:center;gap:.8rem;flex:1;min-width:0;cursor:pointer}
+.tkadm-card-body:hover .tkadm-card-subj{color:var(--gold)}
+.tkadm-card-main{flex:1;min-width:0}
+.tkadm-card-top{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-bottom:.3rem}
+.tkadm-card-subj{font-size:13px;font-weight:800;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:color .15s}
+.tkadm-card-user{font-size:11px;color:var(--faint);margin-bottom:.3rem}
+.tkadm-card-preview{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.6}
+.tkadm-card-meta{font-size:10.5px;color:var(--faint);margin-top:.35rem;display:flex;align-items:center;gap:.3rem}
+/* action column — Close/Reopen + Open chat; spaced so nothing overlaps */
+.tkadm-card-actions{flex-shrink:0;display:flex;flex-direction:column;gap:.45rem;justify-content:center;align-items:stretch;border-right:1px solid var(--rim);padding-right:.7rem}
+.tkadm-actbtn{display:inline-flex;align-items:center;justify-content:center;gap:.35rem;white-space:nowrap;font-family:var(--f);font-size:11.5px;font-weight:800;border-radius:8px;padding:.45rem .8rem;cursor:pointer;border:1px solid var(--rim2);background:var(--bg4);color:var(--text);transition:all .15s}
+.tkadm-actbtn .ic{width:14px;height:14px}
+.tkadm-actbtn.close{background:rgba(216,53,53,.1);border-color:rgba(216,53,53,.3);color:var(--red)}
+.tkadm-actbtn.close:hover{background:rgba(216,53,53,.18)}
+.tkadm-actbtn.reopen{background:rgba(212,146,10,.1);border-color:rgba(212,146,10,.32);color:var(--gold)}
+.tkadm-actbtn.reopen:hover{background:rgba(212,146,10,.18)}
+.tkadm-actbtn.open:hover{border-color:rgba(212,146,10,.4);color:var(--gold)}
+@media(max-width:560px){
+  .tkadm-card{flex-direction:column;align-items:stretch}
+  .tkadm-card-actions{flex-direction:row;border-right:none;border-top:1px solid var(--rim);padding-right:0;padding-top:.6rem;margin-top:.2rem}
+  .tkadm-actbtn{flex:1}
+}
+/* ─── Admin chat modal ─── */
+.achat-mdl{max-width:600px;width:100%;padding:0;overflow:hidden;display:flex;flex-direction:column;height:min(84vh,760px)}
+.achat-hd{display:flex;align-items:center;gap:.6rem;padding:.9rem 1rem;border-bottom:1px solid var(--rim);background:var(--bg3)}
+.achat-hd-info{flex:1;min-width:0}
+.achat-subj{font-size:14px;font-weight:800;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.achat-user{font-size:11px;color:var(--faint)}
+/* close button as a normal flex item (not absolute) → no overlap with controls */
+.achat-x{position:static!important;top:auto!important;left:auto!important;flex-shrink:0;width:32px;height:32px;border-radius:8px}
+/* status bar below the header — segmented control + close action */
+.achat-statusbar{display:flex;align-items:center;flex-wrap:wrap;gap:.6rem;padding:.7rem 1rem;border-bottom:1px solid var(--rim);background:var(--bg2)}
+.achat-sb-lbl{font-size:11px;font-weight:700;color:var(--muted)}
+.achat-seg-group{display:inline-flex;background:var(--bg4);border:1px solid var(--rim2);border-radius:9px;padding:3px;gap:2px}
+.achat-seg{background:none;border:none;color:var(--muted);font-family:var(--f);font-size:11.5px;font-weight:700;padding:.4rem .7rem;border-radius:7px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.achat-seg:hover{color:var(--text)}
+.achat-seg.on{background:linear-gradient(145deg,var(--gold),var(--gold2));color:#fff;box-shadow:0 2px 8px rgba(212,146,10,.3)}
+.achat-close-btn{display:inline-flex;align-items:center;gap:.35rem;margin-right:auto;background:rgba(20,168,122,.12);border:1px solid rgba(20,168,122,.3);color:var(--green);font-family:var(--f);font-size:11.5px;font-weight:800;padding:.45rem .8rem;border-radius:8px;cursor:pointer;transition:all .15s}
+.achat-close-btn:hover{background:rgba(20,168,122,.2)}
+.achat-close-btn.reopen{background:rgba(212,146,10,.12);border-color:rgba(212,146,10,.3);color:var(--gold)}
+.achat-close-btn.reopen:hover{background:rgba(212,146,10,.2)}
+.achat-closed-badge{display:inline-flex;align-items:center;gap:.35rem;font-size:12px;font-weight:700;color:var(--muted)}
+.tkchat-back{flex-shrink:0;background:var(--bg4);border:1px solid var(--rim2);color:var(--muted);width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.tkchat-back:hover{color:var(--text)}
+.tkchat-body{flex:1;overflow-y:auto;padding:1.1rem;display:flex;flex-direction:column;gap:.7rem;background:var(--bg2)}
+.tkchat-loading{text-align:center;color:var(--muted);font-size:13px;padding:2rem 0}
+.tkmsg{display:flex;max-width:82%}
+.tkmsg-me{align-self:flex-start}
+.tkmsg-them{align-self:flex-end}
+.tkmsg-bubble{border-radius:13px;padding:.6rem .8rem;font-size:12.5px;line-height:1.8}
+.tkmsg-me .tkmsg-bubble{background:linear-gradient(145deg,rgba(212,146,10,.18),rgba(212,146,10,.1));border:1px solid rgba(212,146,10,.28)}
+.tkmsg-them .tkmsg-bubble{background:var(--card);border:1px solid var(--rim2)}
+.tkmsg-who{font-size:10px;font-weight:800;color:var(--faint);margin-bottom:.25rem}
+.tkmsg-me .tkmsg-who{color:var(--gold)}
+.tkmsg-text{color:var(--text);white-space:pre-wrap;word-break:break-word}
+.tkmsg-img{max-width:200px;max-height:170px;border-radius:9px;margin-bottom:.35rem;cursor:pointer;display:block;border:1px solid var(--rim2)}
+.tkmsg-time{font-size:9.5px;color:var(--faint);margin-top:.35rem;text-align:left}
+.tkchat-foot{border-top:1px solid var(--rim);padding:.7rem .8rem;background:var(--card)}
+.tkchat-imgwrap{position:relative;display:none;align-items:center;width:fit-content;margin-bottom:.5rem}
+.tkchat-imgwrap img{max-width:70px;max-height:70px;border-radius:8px;border:1px solid var(--rim2)}
+.tkchat-imgx{position:absolute;top:-7px;left:-7px;background:var(--red);color:#fff;border:none;width:20px;height:20px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.tkchat-imgx .ic{width:12px;height:12px}
+.tkchat-inputrow{display:flex;align-items:flex-end;gap:.5rem}
+.tkchat-attach{position:relative;flex-shrink:0;width:40px;height:40px;border-radius:10px;background:var(--bg4);border:1px solid var(--rim2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted)}
+.tkchat-attach:hover{color:var(--gold);border-color:rgba(212,146,10,.4)}
+.tkchat-attach input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.tkchat-foot textarea{flex:1;background:var(--bg4);border:1px solid var(--rim2);border-radius:10px;padding:10px 12px;color:var(--text);font-family:var(--f);font-size:13px;resize:none;max-height:120px;box-sizing:border-box}
+.tkchat-foot textarea:focus{outline:none;border-color:var(--gold)}
+.tkchat-send{flex-shrink:0;width:40px;height:40px;border-radius:10px;background:linear-gradient(145deg,var(--gold),var(--gold2));color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.tkchat-send:disabled{opacity:.5;cursor:not-allowed}
+/* closed-ticket lock */
+.tkmsg-locked{align-self:center;text-align:center;font-size:11.5px;font-weight:700;color:var(--muted);background:var(--bg4);border:1px solid var(--rim2);border-radius:100px;padding:.45rem 1rem;margin-top:.4rem;display:inline-flex;align-items:center;gap:.4rem}
+.tkmsg-locked .ic{color:var(--gold)}
+.tkchat-foot.chat-locked{opacity:.55;pointer-events:none;filter:grayscale(.3)}
+/* ─── Dashboard: clickable revenue KPI + top-product widget ─── */
+.kpi-clickable{cursor:pointer;transition:transform .15s,box-shadow .2s}
+.kpi-clickable:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(212,146,10,.18)}
+.kpi-more{display:block;font-size:9.5px;color:var(--gold);font-weight:800;margin-top:2px}
+.topprod{display:flex;align-items:center;gap:.8rem;background:linear-gradient(135deg,rgba(212,146,10,.12),rgba(212,146,10,.04));border:1px solid rgba(212,146,10,.25);border-radius:13px;padding:.9rem 1.1rem;margin:0 0 1.1rem}
+.topprod-ico{flex-shrink:0;width:40px;height:40px;border-radius:11px;background:rgba(212,146,10,.18);color:var(--gold);display:flex;align-items:center;justify-content:center}
+.topprod-body{flex:1;min-width:0}
+.topprod-l{font-size:10.5px;font-weight:700;color:var(--muted)}
+.topprod-t{font-size:14px;font-weight:900;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topprod-badge{flex-shrink:0;background:var(--gold);color:#1a1300;font-size:11px;font-weight:900;padding:.35rem .7rem;border-radius:100px}
+/* ─── Revenue modal ─── */
+.rev-mdl{max-width:520px;width:100%}
+.rev-hd{display:flex;align-items:center;gap:.8rem;margin-bottom:1.2rem}
+.rev-hd-ico{flex-shrink:0;width:46px;height:46px;border-radius:13px;background:rgba(212,146,10,.15);color:var(--gold);display:flex;align-items:center;justify-content:center}
+.rev-hd h2{font-size:1.05rem;font-weight:900}
+.rev-hd p{font-size:11.5px;color:var(--muted);margin-top:2px}
+.rev-grid{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+.rev-cell{background:var(--bg3);border:1px solid var(--card-bdr);border-radius:11px;padding:.85rem .9rem}
+.rev-cell-wide{grid-column:1/-1;background:linear-gradient(135deg,rgba(212,146,10,.13),rgba(212,146,10,.04));border-color:rgba(212,146,10,.28)}
+.rev-cell-l{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:.3rem}
+.rev-cell-v{font-size:1.15rem;font-weight:900;color:var(--text)}
+.rev-cell-v span{font-size:11px;font-weight:600;color:var(--faint)}
+.rev-cell-wide .rev-cell-v{color:var(--goldL)}
+.rev-top-card{display:flex;align-items:center;gap:.7rem;margin-top:1rem;background:var(--bg3);border:1px solid var(--card-bdr);border-radius:11px;padding:.8rem .9rem}
+.rev-top-ico{flex-shrink:0;width:34px;height:34px;border-radius:9px;background:rgba(212,146,10,.16);color:var(--gold);display:flex;align-items:center;justify-content:center}
+.rev-top-info{flex:1;min-width:0}
+.rev-top-l{font-size:10px;color:var(--muted);font-weight:700}
+.rev-top-t{font-size:13px;font-weight:800;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rev-top-m{flex-shrink:0;font-size:10.5px;color:var(--muted);text-align:left;font-weight:700}
+.rev-top-m span{color:var(--gold)}
+.rev-reset-wrap{margin-top:1.3rem;border-top:1px solid var(--rim);padding-top:1rem}
+.rev-reset-btn{display:inline-flex;align-items:center;gap:.4rem;background:rgba(216,53,53,.1);border:1px solid rgba(216,53,53,.3);color:var(--red);font-family:var(--f);font-size:12.5px;font-weight:800;padding:.6rem 1rem;border-radius:9px;cursor:pointer;transition:background .15s}
+.rev-reset-btn:hover{background:rgba(216,53,53,.18)}
+.rev-reset-btn:disabled{opacity:.6;cursor:wait}
+.rev-reset-note{font-size:10.5px;color:var(--faint);line-height:1.7;margin-top:.5rem}
+@media(max-width:640px){
+  .bundle-list{grid-template-columns:1fr}
+  .tkadm-btns{flex-direction:column}
+}
+/* ─── صفحه تنظیمات ─── */
+.set-card{display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  background:var(--card);border:1px solid var(--rim);border-radius:14px;
+  padding:1.3rem 1.4rem;margin-top:.5rem}
+.set-card-main{display:flex;align-items:center;gap:1rem;min-width:0}
+.set-card-ico{flex-shrink:0;width:46px;height:46px;border-radius:12px;
+  background:rgba(136,132,127,.12);display:flex;align-items:center;justify-content:center;
+  color:var(--muted);transition:background .25s,color .25s}
+.set-card-ico.on{background:rgba(212,146,10,.14);color:var(--gold)}
+.set-card-txt h3{font-size:1rem;font-weight:800;margin-bottom:.25rem}
+.set-card-txt p{font-size:.84rem;color:var(--muted);line-height:1.7}
+/* کلید روشن/خاموش */
+.set-switch{position:relative;display:inline-block;width:52px;height:28px;flex-shrink:0;cursor:pointer}
+.set-switch input{opacity:0;width:0;height:0}
+.set-slider{position:absolute;inset:0;background:var(--bg5);border:1px solid var(--rim2);
+  border-radius:100px;transition:background .25s}
+.set-slider:before{content:"";position:absolute;height:20px;width:20px;right:3px;top:3px;
+  background:var(--muted);border-radius:50%;transition:transform .25s,background .25s}
+.set-switch input:checked + .set-slider{background:rgba(212,146,10,.25);border-color:var(--gold)}
+.set-switch input:checked + .set-slider:before{transform:translateX(-24px);background:var(--gold)}
+.set-note{display:flex;gap:.7rem;align-items:flex-start;margin-top:1rem;
+  background:rgba(212,146,10,.06);border:1px solid rgba(212,146,10,.18);
+  border-radius:11px;padding:.9rem 1.1rem}
+.set-note .ico-slot{flex-shrink:0;color:var(--gold);width:15px;height:15px;margin-top:.15rem}
+.set-note p{font-size:.82rem;line-height:1.85;color:var(--muted)}
+@media(max-width:560px){
+  .set-card{flex-direction:row;padding:1.1rem}
+  .set-card-txt h3{font-size:.92rem}
+  .set-card-txt p{font-size:.78rem}
+}
+/* ─── Feature 4: دکمه‌های مدیریت کاربر ─── */
+.adm-badge-banned{display:inline-block;margin-right:6px;padding:1px 8px;border-radius:100px;
+  font-size:10px;font-weight:800;background:rgba(216,53,53,.15);color:var(--red)}
+.ug-actions{display:flex;gap:.6rem;flex-wrap:wrap;padding:.85rem 1.1rem;
+  border-top:1px solid var(--rim);background:var(--bg3)}
+.uga-btn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem .9rem;
+  border-radius:8px;font-size:12px;font-weight:700;font-family:var(--f);cursor:pointer;
+  border:1px solid var(--rim2);background:var(--bg5);color:var(--text);transition:all .18s}
+.uga-btn .ico-slot{width:13px;height:13px}
+.uga-btn:hover{transform:translateY(-1px)}
+.uga-promote{border-color:rgba(212,146,10,.35);color:var(--goldL)}
+.uga-promote:hover{background:rgba(212,146,10,.12)}
+.uga-demote{border-color:rgba(136,132,127,.3);color:var(--muted)}
+.uga-ban{border-color:rgba(216,53,53,.3);color:var(--red)}
+.uga-ban:hover{background:rgba(216,53,53,.1)}
+.uga-unban{border-color:rgba(20,168,122,.35);color:var(--green)}
+.uga-unban:hover{background:rgba(20,168,122,.1)}
+
+/* ─── Feature 5: مدیریت نظرات ─── */
+.cm-list{display:flex;flex-direction:column;gap:.9rem;margin-top:.5rem}
+.cm-loading{padding:2rem;text-align:center;color:var(--muted);font-size:13px}
+.cm-card{background:var(--card);border:1px solid var(--rim);border-radius:13px;padding:1.1rem 1.2rem}
+.cm-top{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:.7rem}
+.cm-who{display:flex;align-items:center;gap:.7rem;min-width:0}
+.cm-av{flex-shrink:0;width:38px;height:38px;border-radius:10px;
+  background:linear-gradient(145deg,var(--gold),var(--gold2));color:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px}
+.cm-name{font-size:13px;font-weight:800;color:var(--text)}
+.cm-meta{font-size:11px;color:var(--faint);margin-top:2px}
+.cm-stars{flex-shrink:0;color:var(--gold);font-size:13px;letter-spacing:1px}
+.cm-text{font-size:13px;line-height:1.85;color:var(--muted);
+  background:var(--bg3);border-radius:9px;padding:.7rem .85rem}
+.cm-reply{margin-top:.6rem;background:rgba(20,168,122,.07);
+  border:1px solid rgba(20,168,122,.2);border-radius:9px;padding:.7rem .85rem}
+.cm-reply-lbl{display:inline-flex;align-items:center;gap:.3rem;
+  font-size:11px;font-weight:800;color:var(--green);margin-bottom:.3rem}
+.cm-reply p{font-size:12.5px;line-height:1.8;color:var(--muted)}
+.cm-actions{display:flex;gap:.6rem;margin-top:.8rem;flex-wrap:wrap}
+.cm-btn{display:inline-flex;align-items:center;gap:.35rem;padding:.5rem .9rem;
+  border-radius:8px;font-size:12px;font-weight:700;font-family:var(--f);cursor:pointer;
+  border:1px solid var(--rim2);background:var(--bg5);color:var(--text);transition:all .18s}
+.cm-btn .ico-slot{width:13px;height:13px}
+.cm-btn:hover{transform:translateY(-1px)}
+.cm-btn-reply{border-color:rgba(53,128,216,.32);color:var(--blue)}
+.cm-btn-reply:hover{background:rgba(53,128,216,.1)}
+.cm-btn-del{border-color:rgba(216,53,53,.3);color:var(--red)}
+.cm-btn-del:hover{background:rgba(216,53,53,.1)}
+.cm-btn-save{border-color:var(--gold);color:#fff;background:linear-gradient(145deg,var(--gold),var(--gold2))}
+.cm-btn-cancel{color:var(--muted)}
+.cm-reply-box{margin-top:.7rem}
+.cm-reply-box textarea{width:100%;background:var(--inp);border:1px solid var(--inp-bdr);
+  border-radius:9px;padding:.7rem;font-family:var(--f);font-size:12.5px;color:var(--text);
+  resize:vertical;line-height:1.8}
+.cm-reply-acts{display:flex;gap:.5rem;margin-top:.5rem}
+@media(max-width:560px){
+  .cm-top{flex-direction:column;gap:.5rem}
+  .ug-actions,.cm-actions{flex-direction:column}
+  .uga-btn,.cm-btn{width:100%;justify-content:center}
+}
+</style>
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="گرمابندی">
+<meta name="robots" content="noindex, nofollow">
+</head>
+<body>
+
+<!-- ═══ ADMIN NAV — DEDICATED, SEPARATE FROM MAIN SITE ═══ -->
+<nav id="adm-nav">
+  <a href="/" class="adm-logo" title="بازگشت به سایت">
+    <div class="adm-gem"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg></div>
+    <div class="adm-brand"><b>پنل مدیریت</b><small>ADMIN DASHBOARD</small></div>
+  </a>
+  <div class="adm-nav-items">
+    <div class="anl on" id="anl-dash" onclick="goV('dash')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+      <span class="anl-txt">داشبورد</span>
+    </div>
+    <div class="anl" id="anl-products" onclick="goV('products')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 14H8v-2h8v2zm0-4H8v-2h8v2zm0-4H8V6h8v2z"/></svg>
+      <span class="anl-txt">مدیریت محصولات</span>
+    </div>
+    <div class="anl" id="anl-users" onclick="goV('users')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+      <span class="anl-txt">کاربران</span>
+    </div>
+    <div class="anl" id="anl-orders" onclick="goV('orders')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+      <span class="anl-txt">سفارشات</span>
+      <span class="adm-badge" id="issueBadge">!</span>
+    </div>
+    <div class="anl" id="anl-bundles" onclick="goV('bundles')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16zM12 4.15L18.2 7.7l-2.1 1.2L10 5.35 12 4.15zM5.8 7.7L12 11.25l6.2-3.55v6.55L12 18.4l-6.2-3.6V7.7z"/></svg>
+      <span class="anl-txt">پکیج‌ها</span>
+    </div>
+    <div class="anl" id="anl-support" onclick="goV('support')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
+      <span class="anl-txt">تیکت‌های پشتیبانی</span>
+      <span class="adm-badge" id="ticketBadge" style="display:none">!</span>
+    </div>
+    <div class="anl" id="anl-comments" onclick="goV('comments')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
+      <span class="anl-txt">مدیریت نظرات</span>
+    </div>
+    <div class="anl" id="anl-settings" onclick="goV('settings')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.488.488 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+      <span class="anl-txt">تنظیمات</span>
+    </div>
+  </div>
+  <div class="adm-sp"></div>
+  <div class="adm-right">
+    <button class="adm-create-btn" onclick="openCreate()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+      ایجاد محصول جدید
+    </button>
+    <button class="adm-theme-tog" id="admThemeBtn" onclick="toggleAdmTheme()" title="تغییر حالت روشن و تاریک" role="switch" aria-label="تغییر حالت روشن و تاریک"><span class="tt-ic tt-sun"><i class="ico-slot" data-ic="sun" data-sz="17"></i></span><span class="tt-ic tt-moon"><i class="ico-slot" data-ic="moon" data-sz="17"></i></span></button>
+    <div class="adm-who"><div class="adm-dot"></div><span id="admPhone">ادمین</span></div>
+    <a href="/" class="adm-back"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>سایت</a>
+  </div>
+</nav>
+
+<div id="toasts"></div>
+
+<!-- ═══ CREATE PRODUCT MODAL (NEAR FULL-SCREEN) ═══ -->
+<div class="create-ovl" id="createOvl">
+  <div class="create-box">
+    <div class="create-hd">
+      <div class="create-hd-l">
+        <div class="adm-gem" style="width:36px;height:36px;border-radius:9px"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></div>
+        <div><h2 id="createTitle">ایجاد محصول جدید</h2><span id="createSub">تمام فیلدها را با دقت پر کنید</span></div>
+      </div>
+      <button class="create-x" onclick="closeCreate()"><i class="ico-slot" data-ic="x"></i></button>
+    </div>
+    <div class="create-body">
+      <div class="cf-g">
+        <!-- IMAGE UPLOAD - Mandatory slot -->
+        <div class="cf cf-full">
+          <label><i class="ico-slot" data-ic="camera"></i> تصویر محصول <span class="req">*</span> <span class="hint">(تصویر با بلور + واترمارک نمایش داده می‌شود)</span></label>
+          <div class="img-zone" id="imgZone" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event)">
+            <input type="file" id="imgFile" accept="image/*" onchange="handleImgChange(event)">
+            <div id="imgPh">
+              <div class="img-zone-ico"><i class="ico-slot" data-ic="image"></i></div>
+              <div class="img-zone-txt">کلیک کنید یا تصویر را اینجا رها کنید<br><strong>PNG، JPG، WEBP</strong></div>
+              <div class="img-zone-sub">حداکثر ۵۰ مگابایت — تصویر بصورت بلور شده نمایش می‌یابد</div>
+            </div>
+            <div class="img-pvw" id="imgPvw">
+              <img id="imgPvwImg" src="" alt="" draggable="false" oncontextmenu="return false">
+              <div class="img-pvw-badge">
+                <span class="badge-lbl"><i class="ico-slot" data-ic="lock"></i> پیش‌نمایش بلور — محتوا محافظت‌شده</span>
+                <button class="badge-chg" onclick="clearImg(event)">تغییر تصویر</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cf cf-full"><label>عنوان محصول <span class="req">*</span></label><input id="cTit" class="rtl" placeholder="مثال: فصل ۹ — پوشش‌های رنگی"></div>
+        <!-- DIGITAL FILE UPLOAD - Mandatory -->
+        <div class="cf cf-full">
+          <label><i class="ico-slot" data-ic="file-text"></i> آپلود فایل دیجیتال <span class="req" id="digReq">*</span> <span class="hint" id="digHint">(فایل قابل دانلود محصول — هر فرمتی)</span></label>
+          <div class="file-zone" id="fileZone">
+            <input type="file" id="digFile" onchange="handleDigFile(event)">
+            <div id="digPh">
+              <div class="file-zone-ico"><i class="ico-slot" data-ic="download"></i></div>
+              <div class="file-zone-txt">کلیک کنید یا فایل را اینجا رها کنید<br><strong>همه فرمت‌ها پشتیبانی می‌شود</strong></div>
+              <div class="file-zone-sub">هر نوع فایل — حداکثر ۵۰ مگابایت — پس از خرید قابل دانلود</div>
+            </div>
+            <div class="file-picked" id="digPicked">
+              <div class="file-picked-ico"><i class="ico-slot" data-ic="check-circle"></i></div>
+              <div class="file-picked-inf">
+                <div class="file-picked-nm" id="digName">—</div>
+                <div class="file-picked-sz" id="digSize">—</div>
+              </div>
+              <button class="file-picked-x" onclick="clearDigFile(event)"><i class="ico-slot" data-ic="x"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="cf cf-full"><label>توضیحات</label><textarea id="cDes" placeholder="توضیح کامل محصول..."></textarea></div>
+        <div class="cf"><label>نوع محصول <span class="req">*</span></label><select id="cType"><option value="book"><i class="ico-slot" data-ic="book"></i> کتاب کامل</option><option value="chapter"><i class="ico-slot" data-ic="layers"></i> فصل</option><option value="image"><i class="ico-slot" data-ic="image"></i> تصویر فنی</option><option value="article"><i class="ico-slot" data-ic="file-text"></i> مقاله</option></select></div>
+        <div class="cf"><label>قیمت (تومان) <span class="req">*</span></label><input id="cPr" type="number" class="ltr" placeholder="45000"></div>
+        <div class="cf"><label>قیمت اصلی (قبل از تخفیف)</label><input id="cOPr" type="number" class="ltr" placeholder="اختیاری"></div>
+        <div class="cf"><label>تخفیف (%)</label><input id="cDsc" type="number" class="ltr" min="0" max="90" placeholder="مثال: 20"></div>
+        <div class="cf"><label>شماره فصل</label><input id="cChN" type="number" class="ltr" placeholder="مثال: 9"></div>
+        <div class="cf"><label>تعداد صفحات</label><input id="cPgs" type="number" class="ltr" placeholder="مثال: 38"></div>
+        <div class="cf"><label>کد QR صفحه <span class="hint">(برای لینک‌های QR)</span></label><input id="cQrP" class="ltr" placeholder="مثال: ch_09_p1"></div>
+        <div class="cf cf-full"><label>تگ‌ها <span class="hint">(با ویرگول جدا کنید)</span></label><input id="cTags" class="rtl" placeholder="عایق، دیوار، رطوبت، نظام مهندسی"></div>
+        <div class="cf"><label>محصول ویژه؟</label><select id="cFeat"><option value="false">خیر</option><option value="true">بله — نمایش در صفحه اصلی</option></select></div>
+        <div class="cf"><label>صفحات پیش‌نمایش رایگان</label><input id="cFrPg" type="number" class="ltr" placeholder="0"></div>
+      </div>
+    </div>
+    <div class="create-ft">
+      <div class="create-ft-note"><i class="ico-slot" data-ic="shield-lock"></i> تصاویر با blur + watermark نمایش داده می‌شوند — محتوا محافظت‌شده است</div>
+      <div class="create-ft-acts">
+        <input type="hidden" id="editProdId" value="">
+        <button class="btn-cancel" onclick="closeCreate()">انصراف</button>
+        <button class="btn-create" id="btnCreate" onclick="createProd()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          <span id="btnCreateLbl">ایجاد محصول</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<!-- Edit uses the same full-featured create modal (mode-aware) -->
+
+<!-- BUNDLE CREATION MODAL -->
+<div class="create-ovl" id="bundleOvl">
+  <div class="create-box">
+    <div class="create-hd">
+      <div class="create-hd-l">
+        <div class="adm-gem" style="width:36px;height:36px;border-radius:9px"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg></div>
+        <div><h2>ساخت پکیج محصول</h2><span>چند محصول را با یک قیمت ترکیب کنید</span></div>
+      </div>
+      <button class="create-x" onclick="closeBundle()"><i class="ico-slot" data-ic="x"></i></button>
+    </div>
+    <div class="create-body">
+      <div class="cf-g">
+        <div class="cf cf-full"><label>عنوان پکیج <span class="req">*</span></label>
+          <input id="bTit" class="rtl" placeholder="مثال: پکیج ستاره — کتاب + ۲ فایل PDF"></div>
+        <div class="cf cf-full">
+          <label><i class="ico-slot" data-ic="image"></i> تصویر پکیج <span class="hint">(اختیاری — حداکثر ۵۰ مگابایت)</span></label>
+          <div class="img-zone" id="bImgZone" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleBImgDrop(event)">
+            <input type="file" id="bImgFile" accept="image/*" onchange="handleBImgChange(event)">
+            <div id="bImgPh">
+              <div class="img-zone-ico"><i class="ico-slot" data-ic="image"></i></div>
+              <div class="img-zone-txt">کلیک کنید یا تصویر را اینجا رها کنید<br><strong>PNG، JPG، WEBP</strong></div>
+            </div>
+            <div class="img-zone-pvw" id="bImgPvw" style="display:none">
+              <img id="bImgPvwImg" alt="">
+              <button class="img-zone-x" onclick="clearBImg(event)"><i class="ico-slot" data-ic="x"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="cf cf-full"><label>توضیحات</label>
+          <textarea id="bDes" placeholder="توضیح پکیج..."></textarea></div>
+        <div class="cf cf-full">
+          <label><i class="ico-slot" data-ic="package"></i> انتخاب محصولات پکیج <span class="req">*</span>
+            <span class="hint">(حداقل ۲ محصول)</span></label>
+          <div class="bundle-picker" id="bundlePicker"></div>
+          <div class="bundle-sum" id="bundleSum">۰ محصول انتخاب شده — مجموع قیمت تکی: ۰ تومان</div>
+        </div>
+        <div class="cf"><label>قیمت پکیج (تومان) <span class="req">*</span></label>
+          <input id="bPr" type="number" class="ltr" placeholder="قیمت کل پکیج" oninput="updateBundleSum()"></div>
+        <div class="cf"><label>پکیج ویژه؟</label>
+          <select id="bFeat"><option value="false">خیر</option><option value="true">بله — نمایش در صفحه اصلی</option></select></div>
+      </div>
+    </div>
+    <div class="create-ft">
+      <div class="create-ft-note"><i class="ico-slot" data-ic="bulb"></i> پکیج به‌عنوان یک محصول واحد در فروشگاه نمایش داده می‌شود</div>
+      <div class="create-ft-acts">
+        <button class="btn-cancel" onclick="closeBundle()">انصراف</button>
+        <button class="btn-create" id="btnBundle" onclick="createBundle()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          <span>ساخت پکیج</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DISCOUNT MODAL -->
+<div class="ovl" id="discOvl">
+  <div class="mdl" style="width:320px">
+    <button class="mdl-x" onclick="closeOvl('discOvl')"><i class="ico-slot" data-ic="x"></i></button>
+    <h2 style="font-size:1rem;font-weight:800;margin-bottom:.3rem">اعمال تخفیف</h2>
+    <p id="discNm" style="font-size:12px;color:var(--muted);margin-bottom:1.2rem"></p>
+    <div class="fld"><label>درصد تخفیف (۰–۹۰)</label><input id="discPct" type="number" min="0" max="90" placeholder="20" style="direction:ltr;text-align:left"></div>
+    <button class="btn-bl" onclick="applyDisc()">اعمال تخفیف</button>
+  </div>
+</div>
+
+<!-- AUTH GATE -->
+<div id="authGate" style="display:none">
+  <div class="auth-gate">
+    <div class="ag-ico"><i class="ico-slot" data-ic="key"></i></div>
+    <div class="ag-h">ورود به پنل مدیریت</div>
+    <p class="ag-p">این صفحه فقط برای مدیران سیستم قابل دسترس است.</p>
+    <div class="ag-form">
+      <div class="fld"><label>شماره موبایل</label><input id="gPh" type="tel" placeholder="09123456789"></div>
+      <div class="fld"><label>رمز عبور</label><input id="gPs" type="password" placeholder="••••••"></div>
+      <button class="btn-bl" onclick="gateLogin()">ورود به پنل</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN CONTENT -->
+<div id="adm-content">
+
+  <!-- DASHBOARD -->
+  <div class="av on" id="v-dash">
+    <div class="adm-pg">
+      <div class="adm-pg-hd"><div class="adm-pg-ico"><i class="ico-slot" data-ic="grid"></i></div><div><h1>داشبورد</h1><p>نمای کلی وضعیت سیستم و آخرین رویدادها</p></div></div>
+      <div class="kpi-strip">
+        <div class="kpi gold"><div class="kpi-ico"><i class="ico-slot" data-ic="users"></i></div><div class="kpi-n" id="kU">—</div><div class="kpi-l">کل کاربران</div></div>
+        <div class="kpi green"><div class="kpi-ico"><i class="ico-slot" data-ic="check-circle"></i></div><div class="kpi-n" id="kO">—</div><div class="kpi-l">سفارشات موفق</div></div>
+        <div class="kpi gold kpi-clickable" id="kRcard" onclick="openRevenueModal()" title="مشاهدهٔ جزئیات درآمد"><div class="kpi-ico"><i class="ico-slot" data-ic="money"></i></div><div class="kpi-n" id="kR">—</div><div class="kpi-l">درآمد کل (K ت) <span class="kpi-more">جزئیات ›</span></div></div>
+        <div class="kpi red"><div class="kpi-ico"><i class="ico-slot" data-ic="x-circle"></i></div><div class="kpi-n" id="kF">—</div><div class="kpi-l">ناموفق</div></div>
+        <div class="kpi orange"><div class="kpi-ico">⏳</div><div class="kpi-n" id="kP">—</div><div class="kpi-l">در انتظار</div></div>
+      </div>
+      <div id="topProductWidget"></div>
+      <div class="dash-2col">
+        <div><div class="d2-sec"><i class="ico-slot" data-ic="clock"></i> آخرین سفارشات</div><div id="dOrdList"></div></div>
+        <div><div class="d2-sec" style="color:var(--red)"><i class="ico-slot" data-ic="alert"></i> مشکلات پرداخت</div><div id="dIssList"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REVENUE ANALYTICS MODAL -->
+  <div class="ovl" id="revModal">
+    <div class="mdl rev-mdl">
+      <button class="mdl-x" onclick="closeOvl('revModal')"><i class="ico-slot" data-ic="x"></i></button>
+      <div class="rev-hd">
+        <div class="rev-hd-ico"><i class="ico-slot" data-ic="money" data-sz="20"></i></div>
+        <div><h2>تحلیل درآمد</h2><p id="revSub">—</p></div>
+      </div>
+      <div class="rev-grid" id="revGrid"></div>
+      <div id="revTop"></div>
+      <div class="rev-reset-wrap">
+        <button class="rev-reset-btn" id="revResetBtn" onclick="resetRevenue()"><i class="ico-slot" data-ic="alert" data-sz="14"></i> ریست درآمد انباشته</button>
+        <p class="rev-reset-note">سفارش‌ها و خریدهای کاربران حذف نمی‌شوند؛ فقط شمارش درآمد از این لحظه صفر می‌شود.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRODUCTS MANAGEMENT — DISTINCT UI FROM SHOP -->
+  <div class="av" id="v-products">
+    <div class="adm-pg">
+      <div class="adm-pg-hd"><div class="adm-pg-ico"><i class="ico-slot" data-ic="package"></i></div><div><h1>مدیریت محصولات</h1><p>جستجو، فیلتر و مدیریت موجودی — رابط ادمین مستقل از فروشگاه</p></div></div>
+      <div class="mgmt-bar">
+        <div class="mgmt-search">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input id="mgmtSrch" placeholder="جستجو در محصولات — عنوان، ID، تگ..." oninput="renderProdTable()">
+        </div>
+        <div class="mgmt-filters" id="mgmtFilts">
+          <button class="mf on" onclick="setPF(this,'all')">همه</button>
+          <button class="mf" onclick="setPF(this,'book')"><i class="ico-slot" data-ic="book"></i> کتاب</button>
+          <button class="mf" onclick="setPF(this,'chapter')"><i class="ico-slot" data-ic="layers"></i> فصل</button>
+          <button class="mf" onclick="setPF(this,'image')"><i class="ico-slot" data-ic="image"></i> تصویر</button>
+          <button class="mf" onclick="setPF(this,'article')"><i class="ico-slot" data-ic="file-text"></i> مقاله</button>
+          <button class="mf" onclick="setPF(this,'featured')"><i class="ico-slot" data-ic="star"></i> ویژه</button>
+        </div>
+        <span class="mf-stats" id="mgmtCnt"></span>
+      </div>
+      <div class="prod-tbl">
+        <div class="prod-tbl-hd">
+          <span>تصویر</span><span>محصول / شناسه</span><span>نوع</span><span>قیمت</span><span>تخفیف</span><span>وضعیت</span><span>عملیات</span>
+        </div>
+        <div id="prodTblBody"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- USERS -->
+  <div class="av" id="v-users">
+    <div class="adm-pg">
+      <div class="adm-pg-hd"><div class="adm-pg-ico"><i class="ico-slot" data-ic="users"></i></div><div><h1>کاربران و گروه‌ها</h1><p>گروه‌بندی بر اساس شماره تلفن با سابقه خرید کامل</p></div></div>
+      <div class="mgmt-bar">
+        <div class="mgmt-search">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input id="usrSrch" placeholder="جستجو با شماره یا نام..." oninput="renderUsers()">
+        </div>
+      </div>
+      <div id="userList"></div>
+    </div>
+  </div>
+
+  <!-- ORDERS WITH PAYMENT ISSUES -->
+  <div class="av" id="v-orders">
+    <div class="adm-pg">
+      <div class="adm-pg-hd"><div class="adm-pg-ico"><i class="ico-slot" data-ic="receipt"></i></div><div><h1>سفارشات اخیر</h1><p>مشاهده و فیلتر کامل — شامل تراکنش‌های ناموفق و معلق</p></div></div>
+      <div class="ord-issue-banner" id="oiBanner">
+        <div class="oib-ico"><i class="ico-slot" data-ic="alert"></i></div>
+        <div class="oib-txt"><h4 id="oiBannerTit">مشکلات پرداخت شناسایی شد</h4><p id="oiBannerSub">برای رسیدگی فوری فیلتر مشکلات را انتخاب کنید.</p></div>
+      </div>
+      <div class="ord-ftabs">
+        <button class="oft on" onclick="setOF(this,'all')">همه <span class="ord-cnt-badge" id="ocAll"></span></button>
+        <button class="oft" onclick="setOF(this,'paid')"><i class="ico-slot" data-ic="check-circle"></i> پرداخت شده <span class="ord-cnt-badge" id="ocPaid"></span></button>
+        <button class="oft fail-tab" onclick="setOF(this,'failed')"><i class="ico-slot" data-ic="x-circle"></i> ناموفق <span class="ord-cnt-badge" id="ocFail" style="background:rgba(214,53,53,.2)"></span></button>
+        <button class="oft pend-tab" onclick="setOF(this,'pending')">⏳ در انتظار <span class="ord-cnt-badge" id="ocPend" style="background:rgba(224,112,32,.2)"></span></button>
+      </div>
+      <div class="ord-items" id="ordList"></div>
+    </div>
+  </div>
+
+  <!-- BUNDLES VIEW -->
+  <div class="av" id="v-bundles">
+    <div class="adm-pg">
+      <div class="adm-pg-hd">
+        <div class="adm-pg-ico"><i class="ico-slot" data-ic="package"></i></div>
+        <div><h1>پکیج‌های محصول</h1><p>چند محصول را در یک پکیج با قیمت اختصاصی ترکیب کنید</p></div>
+      </div>
+      <button class="adm-create-btn" onclick="openBundle()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        ساخت پکیج جدید
+      </button>
+      <div id="bundleList" class="bundle-list"></div>
+    </div>
+  </div>
+
+  <!-- SUPPORT TICKETS VIEW -->
+  <div class="av" id="v-support">
+    <div class="adm-pg">
+      <div class="adm-pg-hd">
+        <div class="adm-pg-ico"><i class="ico-slot" data-ic="message"></i></div>
+        <div><h1>تیکت‌های پشتیبانی</h1><p>مشاهده و پاسخ به پیام‌های کاربران</p></div>
+      </div>
+      <div class="tkadm-ftabs">
+        <button class="tkf on" onclick="setTF(this,'all')">همه <span class="ord-cnt-badge" id="tcAll"></span></button>
+        <button class="tkf" onclick="setTF(this,'pending')"><i class="ico-slot" data-ic="alert"></i> در انتظار <span class="ord-cnt-badge" id="tcOpen"></span></button>
+        <button class="tkf" onclick="setTF(this,'answered')"><i class="ico-slot" data-ic="check-circle"></i> پاسخ‌داده <span class="ord-cnt-badge" id="tcAns"></span></button>
+        <button class="tkf" onclick="setTF(this,'waiting')"><i class="ico-slot" data-ic="clock"></i> منتظر مشتری <span class="ord-cnt-badge" id="tcWait"></span></button>
+      </div>
+      <div id="tkAdmList" class="tkadm-list"></div>
+    </div>
+  </div>
+
+  <!-- ADMIN TICKET CHAT MODAL -->
+  <div class="ovl" id="achatOvl">
+    <div class="mdl achat-mdl">
+      <div class="achat-hd">
+        <button class="tkchat-back" onclick="closeAdminChat()" aria-label="بازگشت"><i class="ico-slot" data-ic="arrow-right"></i></button>
+        <div class="achat-hd-info">
+          <div class="achat-subj" id="achatSubj">—</div>
+          <div class="achat-user" id="achatUser">—</div>
+        </div>
+        <button class="mdl-x achat-x" onclick="closeAdminChat()" aria-label="بستن"><i class="ico-slot" data-ic="x"></i></button>
+      </div>
+      <!-- status controls live in their own bar so they never overlap the close button -->
+      <div class="achat-statusbar" id="achatStatusbar"></div>
+      <div class="tkchat-body achat-body" id="achatBody"></div>
+      <div class="tkchat-foot">
+        <div class="tkchat-imgwrap" id="achatImgWrap">
+          <img id="achatImgPrev" src="" alt="">
+          <button class="tkchat-imgx" onclick="achatClearImg()"><i class="ico-slot" data-ic="x"></i></button>
+        </div>
+        <div class="tkchat-inputrow">
+          <label class="tkchat-attach" title="افزودن تصویر">
+            <input type="file" id="achatImg" accept="image/*" onchange="achatHandleImg(event)">
+            <i class="ico-slot" data-ic="image"></i>
+          </label>
+          <textarea id="achatMsg" rows="1" maxlength="2000" placeholder="پاسخ خود را بنویسید…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAdminReply();}"></textarea>
+          <button class="tkchat-send" id="achatSend" onclick="sendAdminReply()" aria-label="ارسال"><i class="ico-slot" data-ic="send"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS VIEW -->
+  <div class="av" id="v-settings">
+    <div class="adm-pg">
+      <div class="adm-pg-hd">
+        <div class="adm-pg-ico"><i class="ico-slot" data-ic="settings"></i></div>
+        <div><h1>تنظیمات سایت</h1><p>مدیریت وضعیت و تنظیمات کلی</p></div>
+      </div>
+
+      <div class="set-card">
+        <div class="set-card-main">
+          <div class="set-card-ico" id="maintIco"><i class="ico-slot" data-ic="alert"></i></div>
+          <div class="set-card-txt">
+            <h3>حالت تعمیر سایت</h3>
+            <p id="maintDesc">در حال بررسی وضعیت…</p>
+          </div>
+        </div>
+        <label class="set-switch">
+          <input type="checkbox" id="maintToggle" onchange="toggleMaintenance()">
+          <span class="set-slider"></span>
+        </label>
+      </div>
+      <div class="set-note">
+        <i class="ico-slot" data-ic="alert"></i>
+        <p>وقتی حالت تعمیر <b>روشن</b> باشد، بازدیدکنندگان صفحه‌ی «در حال تعمیر» را می‌بینند. شما به‌عنوان ادمین همچنان به این پنل دسترسی دارید و می‌توانید آن را خاموش کنید.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMMENTS MANAGEMENT VIEW -->
+  <div class="av" id="v-comments">
+    <div class="adm-pg">
+      <div class="adm-pg-hd">
+        <div class="adm-pg-ico"><i class="ico-slot" data-ic="message"></i></div>
+        <div><h1>مدیریت نظرات</h1><p>مشاهده، پاسخ و حذف نظرات کاربران روی محصولات</p></div>
+      </div>
+      <div id="cmList" class="cm-list"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   PROFESSIONAL SVG ICON SYSTEM
+   Replaces emojis with clean inline vector icons.
+   Usage:  ic('cart')  ic('cart',18)  ic('cart',18,'#d49210')
+═══════════════════════════════════════════════════ */
+const ICONS={
+  check:'<path d="M20 6L9 17l-5-5"/>',
+  settings:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+  'check-circle':'<circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/>',
+  x:'<path d="M18 6L6 18M6 6l12 12"/>',
+  cart:'<circle cx="9" cy="21" r="1.6"/><circle cx="19" cy="21" r="1.6"/><path d="M2.5 3h2.5l2.6 12.4a2 2 0 002 1.6h8.7a2 2 0 002-1.5L23 7H6"/>',
+  'file-text':'<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6M9 9h1"/>',
+  camera:'<path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="3.5"/>',
+  moon:'<path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z"/>',
+  sun:'<circle cx="12" cy="12" r="4.5"/><path d="M12 1v2.5M12 20.5V23M4.2 4.2l1.8 1.8M18 18l1.8 1.8M1 12h2.5M20.5 12H23M4.2 19.8L6 18M18 6l1.8-1.8"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
+  layers:'<path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>',
+  book:'<path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>',
+  image:'<rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="8.5" cy="8.5" r="1.8"/><path d="M21 15l-5-5L5 21"/>',
+  lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/>',
+  'shield-lock':'<path d="M12 2l8 3v6c0 5-3.4 8.7-8 10-4.6-1.3-8-5-8-10V5z"/><path d="M12 11v3"/><circle cx="12" cy="10" r="1"/>',
+  'arrow-left':'<path d="M19 12H5M12 19l-7-7 7-7"/>',
+  'arrow-right':'<path d="M5 12h14M12 5l7 7-7 7"/>',
+  'arrow-down':'<path d="M12 5v14M5 12l7 7 7-7"/>',
+  download:'<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
+  mail:'<rect x="2" y="4" width="20" height="16" rx="2.5"/><path d="M3 7l9 6 9-6"/>',
+  cpu:'<rect x="5" y="5" width="14" height="14" rx="2.5"/><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/>',
+  package:'<path d="M16.5 9.4L7.5 4.2M21 16V8a2 2 0 00-1-1.7l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.7l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.3 7L12 12l8.7-5M12 22V12"/>',
+  bulb:'<path d="M9 18h6M10 22h4M12 2a7 7 0 00-4 12.7c.6.5 1 1.3 1 2.1V18h6v-1.2c0-.8.4-1.6 1-2.1A7 7 0 0012 2z"/>',
+  target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4"/>',
+  star:'<path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5-5.9-3.1-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/>',
+  alert:'<path d="M10.3 3.3L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.3a2 2 0 00-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
+  home:'<path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/>',
+  zap:'<path d="M13 2L4.5 13.5H11l-1 8.5 8.5-11.5H12z"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/>',
+  building:'<rect x="4" y="2" width="16" height="20" rx="1.5"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2M10 22v-3h4v3"/>',
+  unlock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 017.9-1"/>',
+  handshake:'<path d="M11 17l2 2a1.4 1.4 0 002-2M13 19l2.5 2.5a1.4 1.4 0 002-2L17 17"/><path d="M2 11l4-4 5 5 .5-.5a1.5 1.5 0 012 0L21 14"/><path d="M22 13l-4 4M2 11v3l5 5M22 13V9l-5-5-4 4"/>',
+  phone:'<path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014 2h3a2 2 0 012 1.7c.1 1 .4 1.9.7 2.8a2 2 0 01-.5 2.1L8 9.9a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.5c.9.3 1.8.6 2.8.7A2 2 0 0122 16.9z"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',
+  pin:'<path d="M21 10c0 6-9 13-9 13s-9-7-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>',
+  key:'<circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3L20 3M16 5l3 3M14 7l3 3"/>',
+  card:'<rect x="2" y="5" width="20" height="14" rx="2.5"/><path d="M2 10h20"/>',
+  qr:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM21 14v3M14 21h7M18 18v3"/>',
+  message:'<path d="M21 11.5a8.4 8.4 0 01-9 8.4 8.5 8.5 0 01-3.8-.8L3 21l1.9-5.2A8.4 8.4 0 0112 3a8.4 8.4 0 019 8.5z"/>',
+  spark:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',
+  share:'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>',
+  send:'<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>',
+  grid:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+  list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  logout:'<path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>',
+  'x-circle':'<circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/>',
+  'clipboard':'<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/>',
+  'receipt':'<path d="M5 2v20l2.5-1.8L10 22l2-1.8L14 22l2.5-1.8L19 22V2l-2.5 1.8L14 2l-2 1.8L10 2 7.5 3.8z"/><path d="M9 8h6M9 12h6M9 16h4"/>',
+  'users':'<circle cx="9" cy="8" r="3.5"/><path d="M2 21c0-3.5 3-5.5 7-5.5s7 2 7 5.5"/><path d="M16 4.5a3.5 3.5 0 010 7M22 21c0-3-2-5-5-5.5"/>',
+  'money':'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 12h.01M18 12h.01"/>',
+  gem:'<path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M12 3l4 6-4 12-4-12z"/>'
+};
+/* Returns an inline SVG string */
+function ic(name,size=16,stroke='currentColor',sw=2){
+  const p=ICONS[name];
+  if(!p)return '';
+  return `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" `+
+         `stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" `+
+         `aria-hidden="true">${p}</svg>`;
+}
+/* Filled variant (for stars etc.) */
+function icf(name,size=16,fill='currentColor'){
+  const p=ICONS[name];
+  if(!p)return '';
+  return `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 24 24" `+
+         `fill="${fill}" stroke="none" aria-hidden="true">${p}</svg>`;
+}
+
+
+/* ─── ICON HYDRATION (admin) ─── */
+function hydrateIcons(root){(root||document).querySelectorAll(".ico-slot[data-ic]").forEach(el=>{const n=el.getAttribute("data-ic");const s=el.getAttribute("data-sz")||16;el.innerHTML=ic(n,+s);el.classList.add("ico-ready");});}
+document.addEventListener("DOMContentLoaded",()=>hydrateIcons(document));
+/* re-hydrate after dynamic admin renders */
+(function(){["renderProducts","renderUsers","renderOrders","renderDash","render","load","loadAll"].forEach(name=>{const o=window[name];if(typeof o==="function"){window[name]=function(){const r=o.apply(this,arguments);if(r&&r.then)r.then(()=>hydrateIcons(document));else hydrateIcons(document);return r;};}});})();
+setInterval(()=>hydrateIcons(document),800);
+
+
+const API="/api";
+let token=localStorage.getItem("tb_tk")||null;
+let me=JSON.parse(localStorage.getItem("tb_me")||"null");
+let allProds=[],allUsers=[],allOrders=[];
+let prodFilter="all",ordFilter="all",discTgt=null;
+/* Raw File objects (sent via multipart FormData — no base64 conversion).
+   Storing the File directly keeps memory low and uploads fast. */
+let imgFileObj=null,imgPreviewUrl="";
+let digFileObj=null,digFileName="",digFileSizeMB=0;
+
+const TI={book:"",chapter:"",image:"",article:""};
+const TL={book:"کتاب",chapter:"فصل",image:"تصویر فنی",article:"مقاله"};
+const TC={book:"tt-book",chapter:"tt-chapter",image:"tt-image",article:"tt-article"};
+
+async function api(m,p,b){
+  const o={method:m,headers:{}};
+  if(token)o.headers["Authorization"]="Bearer "+token;
+  if(b instanceof FormData){
+    /* multipart upload — let the browser set Content-Type + boundary */
+    o.body=b;
+  }else if(b){
+    o.headers["Content-Type"]="application/json";
+    o.body=JSON.stringify(b);
+  }
+  const r=await fetch(API+p,o);const d=await r.json();if(!r.ok)throw new Error(d.error||"خطا");return d;
+}
+function toast(msg,t="nfo"){const el=document.createElement("div");el.className="tst "+t;el.textContent=msg;document.getElementById("toasts").appendChild(el);setTimeout(()=>{el.style.opacity="0";el.style.transition="opacity .3s";setTimeout(()=>el.remove(),300);},3200);}
+/* keep token in a cookie so the maintenance gate lets the admin browse the live site */
+function syncAuthCookie(){try{if(token)document.cookie="tb_tk="+encodeURIComponent(token)+";path=/;max-age=2592000;samesite=lax";else document.cookie="tb_tk=;path=/;max-age=0;samesite=lax";}catch{}}
+function closeOvl(id){document.getElementById(id).classList.remove("on");}
+document.querySelectorAll(".ovl").forEach(o=>o.addEventListener("click",e=>{if(e.target===o)o.classList.remove("on");}));
+
+/* AUTH GATE */
+async function checkAuth(){
+  if(!token||!me){showGate();return false;}
+  try{const u=await api("GET","/auth/me");if(!u.isAdmin){showGate("دسترسی ادمین ندارید");return false;}me=u;syncAuthCookie();document.getElementById("admPhone").textContent=me.phone;return true;}
+  catch{showGate();return false;}
+}
+function showGate(msg=""){
+  document.getElementById("adm-nav").style.display="none";
+  document.getElementById("adm-content").style.display="none";
+  document.getElementById("authGate").style.display="block";
+  if(msg)toast(msg,"err");
+}
+async function gateLogin(){
+  const ph=document.getElementById("gPh").value.trim(),ps=document.getElementById("gPs").value;
+  try{
+    const d=await api("POST","/auth/login",{phone:ph,password:ps});
+    if(!d.user.isAdmin){toast("دسترسی ادمین ندارید","err");return;}
+    token=d.token;me=d.user;localStorage.setItem("tb_tk",token);localStorage.setItem("tb_me",JSON.stringify(me));syncAuthCookie();
+    document.getElementById("adm-nav").style.display="flex";
+    document.getElementById("adm-content").style.display="block";
+    document.getElementById("authGate").style.display="none";
+    document.getElementById("admPhone").textContent=me.phone;
+    await init();
+  }catch(e){toast(e.message,"err");}
+}
+
+/* NAVIGATION */
+function goV(v){
+  document.querySelectorAll(".av").forEach(x=>x.classList.remove("on"));
+  document.querySelectorAll(".anl").forEach(x=>x.classList.remove("on"));
+  document.getElementById("v-"+v).classList.add("on");
+  document.getElementById("anl-"+v).classList.add("on");
+  if(v==="bundles")loadBundles();
+  if(v==="support")loadAdminTickets();
+  if(v==="settings")loadSettings();
+  if(v==="comments")loadComments();
+}
+
+/* ─── Feature 5: مدیریت نظرات ─── */
+let allComments=[];
+async function loadComments(){
+  const el=document.getElementById("cmList");
+  el.innerHTML=`<div class="cm-loading">در حال بارگذاری…</div>`;
+  try{
+    allComments=await api("GET","/admin/reviews");
+    renderComments();
+  }catch(e){
+    el.innerHTML=`<div class="empty"><div class="empty-i">${ic('alert',16)}</div><p>خطا در بارگذاری نظرات</p></div>`;
+  }
+}
+function renderComments(){
+  const el=document.getElementById("cmList");
+  if(!allComments.length){
+    el.innerHTML=`<div class="empty"><div class="empty-i">${ic('message',16)}</div><p>هنوز نظری ثبت نشده است</p></div>`;
+    return;
+  }
+  el.innerHTML=allComments.map(c=>{
+    const stars="★".repeat(c.rating||0)+"☆".repeat(5-(c.rating||0));
+    const date=c.createdAt?new Date(c.createdAt).toLocaleDateString("fa-IR"):"";
+    return`<div class="cm-card" id="cm-${c.id}">
+      <div class="cm-top">
+        <div class="cm-who">
+          <div class="cm-av">${(c.userName||"؟").slice(0,2)}</div>
+          <div>
+            <div class="cm-name">${escAdm(c.userName||"کاربر")}</div>
+            <div class="cm-meta">${escAdm(c.productTitle||"")} · ${date}</div>
+          </div>
+        </div>
+        <div class="cm-stars">${stars}</div>
+      </div>
+      <div class="cm-text">${escAdm(c.text||c.comment||"")}</div>
+      ${c.adminReply?`<div class="cm-reply"><span class="cm-reply-lbl">${ic('check-circle',12)} پاسخ مدیر</span><p>${escAdm(c.adminReply)}</p></div>`:""}
+      <div class="cm-actions">
+        <button class="cm-btn cm-btn-reply" onclick="openReply('${c.id}')">
+          <i class="ico-slot" data-ic="message"></i> ${c.adminReply?"ویرایش پاسخ":"پاسخ دادن"}
+        </button>
+        <button class="cm-btn cm-btn-del" onclick="delComment('${c.id}')">
+          <i class="ico-slot" data-ic="x"></i> حذف نظر
+        </button>
+      </div>
+      <div class="cm-reply-box" id="cmrb-${c.id}" style="display:none">
+        <textarea id="cmra-${c.id}" placeholder="پاسخ خود را بنویسید…" rows="3">${escAdm(c.adminReply||"")}</textarea>
+        <div class="cm-reply-acts">
+          <button class="cm-btn cm-btn-save" onclick="saveReply('${c.id}')"><i class="ico-slot" data-ic="check"></i> ثبت پاسخ</button>
+          <button class="cm-btn cm-btn-cancel" onclick="document.getElementById('cmrb-${c.id}').style.display='none'">انصراف</button>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+  if(typeof hydrateIcons==="function")hydrateIcons(el);
+}
+function escAdm(s){const d=document.createElement("div");d.textContent=s==null?"":String(s);return d.innerHTML;}
+function openReply(id){
+  const box=document.getElementById("cmrb-"+id);
+  box.style.display=box.style.display==="none"?"block":"none";
+}
+async function saveReply(id){
+  const txt=document.getElementById("cmra-"+id).value.trim();
+  try{
+    await api("PUT",`/admin/reviews/${id}/reply`,{reply:txt});
+    toast("پاسخ ثبت شد","ok");
+    allComments=await api("GET","/admin/reviews");renderComments();
+  }catch(e){toast(e.message||"خطا","err");}
+}
+async function delComment(id){
+  if(!confirm("این نظر برای همیشه حذف شود؟"))return;
+  try{
+    await api("DELETE",`/admin/reviews/${id}`);
+    toast("نظر حذف شد","ok");
+    allComments=await api("GET","/admin/reviews");renderComments();
+  }catch(e){toast(e.message||"خطا","err");}
+}
+
+/* ─── تنظیمات: حالت تعمیر ─── */
+async function loadSettings(){
+  try{
+    const r=await api("GET","/admin/maintenance");
+    applyMaintUI(r.maintenance);
+  }catch(e){
+    toast("خطا در دریافت وضعیت","err");
+  }
+}
+function applyMaintUI(on){
+  const tg=document.getElementById("maintToggle");
+  const ico=document.getElementById("maintIco");
+  const desc=document.getElementById("maintDesc");
+  if(tg)tg.checked=!!on;
+  if(ico)ico.classList.toggle("on",!!on);
+  if(desc)desc.textContent=on
+    ?"حالت تعمیر روشن است — بازدیدکنندگان صفحه‌ی تعمیر را می‌بینند."
+    :"حالت تعمیر خاموش است — سایت برای همه باز است.";
+}
+async function toggleMaintenance(){
+  const tg=document.getElementById("maintToggle");
+  const want=tg.checked;
+  tg.disabled=true;
+  try{
+    const r=await api("PUT","/admin/maintenance",{enabled:want});
+    applyMaintUI(r.maintenance);
+    toast(want?"حالت تعمیر روشن شد":"حالت تعمیر خاموش شد","ok");
+  }catch(e){
+    toast(e.message||"خطا در تغییر وضعیت","err");
+    tg.checked=!want; /* برگرداندن به حالت قبل */
+  }finally{
+    tg.disabled=false;
+  }
+}
+
+/* CREATE MODAL */
+/* ─── Create / Edit product modal (shared, mode-aware) ─── */
+function resetCreateForm(){
+  ["cTit","cDes","cPr","cOPr","cDsc","cChN","cPgs","cFrPg","cQrP","cTags"].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value="";
+  });
+  document.getElementById("cType").value="book";
+  document.getElementById("cFeat").value="false";
+  clearImg();clearDigFile();
+}
+function openCreate(){
+  /* CREATE mode */
+  document.getElementById("editProdId").value="";
+  document.getElementById("createTitle").textContent="ایجاد محصول جدید";
+  document.getElementById("createSub").textContent="تمام فیلدها را با دقت پر کنید";
+  document.getElementById("btnCreateLbl").textContent="ایجاد محصول";
+  document.getElementById("digReq").style.display="";
+  document.getElementById("digHint").textContent="(فایل قابل دانلود محصول — هر فرمتی)";
+  resetCreateForm();
+  document.getElementById("createOvl").classList.add("on");
+}
+function openEdit(id){
+  const p=allProds.find(x=>x.id===id);if(!p)return;
+  /* EDIT mode — same modal, pre-filled */
+  document.getElementById("editProdId").value=id;
+  document.getElementById("createTitle").textContent="ویرایش محصول";
+  document.getElementById("createSub").textContent="اطلاعات محصول را به‌روزرسانی کنید";
+  document.getElementById("btnCreateLbl").textContent="ذخیره تغییرات";
+  resetCreateForm();
+  /* pre-fill all fields */
+  document.getElementById("cTit").value=p.title||"";
+  document.getElementById("cDes").value=p.description||"";
+  document.getElementById("cPr").value=p.price||"";
+  document.getElementById("cOPr").value=p.originalPrice||"";
+  document.getElementById("cDsc").value=p.discount||"";
+  document.getElementById("cChN").value=p.chapterNum||"";
+  document.getElementById("cPgs").value=p.pages||"";
+  document.getElementById("cFrPg").value=p.freePages||"";
+  document.getElementById("cQrP").value=p.qrPage||"";
+  document.getElementById("cTags").value=(p.tags||[]).join("، ");
+  document.getElementById("cType").value=p.type||"book";
+  document.getElementById("cFeat").value=p.featured?"true":"false";
+  /* show existing image as preview (if any) */
+  if(p.image&&p.image.length>4){
+    document.getElementById("imgPvwImg").src=p.image;
+    document.getElementById("imgPh").style.display="none";
+    document.getElementById("imgPvw").style.display="block";
+  }
+  /* show existing file status; the file field becomes OPTIONAL on edit */
+  document.getElementById("digReq").style.display="none";
+  document.getElementById("digHint").textContent="(برای حفظ فایل فعلی خالی بگذارید — یا فایل جدید بارگذاری کنید)";
+  if(p.hasFile){
+    document.getElementById("digName").textContent=p.fileName||"فایل فعلی محصول";
+    document.getElementById("digSize").textContent=(p.fileSizeMB?p.fileSizeMB.toLocaleString("fa-IR")+" مگابایت":"فایل موجود");
+    document.getElementById("digPh").style.display="none";
+    document.getElementById("digPicked").style.display="flex";
+  }
+  document.getElementById("createOvl").classList.add("on");
+  if(typeof hydrateIcons==="function")hydrateIcons(document.getElementById("createOvl"));
+}
+function closeCreate(){document.getElementById("createOvl").classList.remove("on");clearImg();clearDigFile();}
+
+function handleImgChange(e){
+  const file=e.target.files[0];if(!file)return;
+  if(!file.type.startsWith("image/")){toast("فقط فایل تصویری مجاز است","err");return;}
+  if(file.size>50*1024*1024){toast("حجم تصویر بیش از ۵۰ مگابایت","err");return;}
+  imgFileObj=file;
+  /* preview via object URL — instant, no base64 conversion */
+  if(imgPreviewUrl)URL.revokeObjectURL(imgPreviewUrl);
+  imgPreviewUrl=URL.createObjectURL(file);
+  document.getElementById("imgPvwImg").src=imgPreviewUrl;
+  document.getElementById("imgPh").style.display="none";
+  document.getElementById("imgPvw").style.display="block";
+}
+function handleDrop(e){
+  e.preventDefault();document.getElementById("imgZone").classList.remove("drag");
+  const file=e.dataTransfer.files[0];
+  if(file&&file.type.startsWith("image/")){
+    const dt=new DataTransfer();dt.items.add(file);
+    document.getElementById("imgFile").files=dt.files;
+    handleImgChange({target:{files:[file]}});
+  }
+}
+function clearImg(e){
+  if(e)e.stopPropagation();
+  imgFileObj=null;
+  if(imgPreviewUrl){URL.revokeObjectURL(imgPreviewUrl);imgPreviewUrl="";}
+  document.getElementById("imgFile").value="";
+  document.getElementById("imgPvwImg").src="";
+  document.getElementById("imgPh").style.display="block";
+  document.getElementById("imgPvw").style.display="none";
+}
+
+/* ─── Digital file upload (any extension, up to 50MB) ─── */
+function handleDigFile(e){
+  const file=e.target.files[0];if(!file)return;
+  if(file.size>50*1024*1024){toast("حجم فایل بیش از ۵۰ مگابایت","err");return;}
+  digFileObj=file;
+  digFileName=file.name;
+  digFileSizeMB=Math.max(1,Math.round(file.size/1048576*10)/10);
+  document.getElementById("digName").textContent=file.name;
+  document.getElementById("digSize").textContent=digFileSizeMB.toLocaleString("fa-IR")+" مگابایت";
+  document.getElementById("digPh").style.display="none";
+  document.getElementById("digPicked").style.display="flex";
+  if(typeof hydrateIcons==="function")hydrateIcons(document.getElementById("fileZone"));
+}
+function clearDigFile(e){
+  if(e)e.stopPropagation();
+  digFileObj=null;digFileName="";digFileSizeMB=0;
+  const f=document.getElementById("digFile");if(f)f.value="";
+  document.getElementById("digPh").style.display="block";
+  document.getElementById("digPicked").style.display="none";
+}
+
+async function createProd(){
+  const editId=document.getElementById("editProdId").value;
+  const isEdit=!!editId;
+  const title=document.getElementById("cTit").value.trim(),price=parseInt(document.getElementById("cPr").value);
+  if(!title){toast("عنوان الزامی است","err");return;}
+  if(!price||price<=0){toast("قیمت الزامی است","err");return;}
+  /* file is mandatory on CREATE; optional on EDIT (keeps existing if omitted) */
+  if(!isEdit&&!digFileObj){toast("آپلود فایل دیجیتال الزامی است","err");return;}
+  const btn=document.getElementById("btnCreate"),lbl=document.getElementById("btnCreateLbl");
+  btn.disabled=true;lbl.textContent=isEdit?"در حال ذخیره...":"در حال آپلود...";
+  try{
+    /* multipart FormData — files stream as raw bytes, text fields as strings */
+    const fd=new FormData();
+    fd.append("title",title);
+    fd.append("price",price);
+    fd.append("description",document.getElementById("cDes").value.trim());
+    fd.append("type",document.getElementById("cType").value);
+    fd.append("originalPrice",parseInt(document.getElementById("cOPr").value)||"");
+    fd.append("discount",parseInt(document.getElementById("cDsc").value)||0);
+    fd.append("chapterNum",parseInt(document.getElementById("cChN").value)||"");
+    fd.append("pages",parseInt(document.getElementById("cPgs").value)||"");
+    fd.append("freePages",parseInt(document.getElementById("cFrPg").value)||0);
+    fd.append("qrPage",document.getElementById("cQrP").value.trim());
+    fd.append("tags",document.getElementById("cTags").value||"");
+    fd.append("featured",document.getElementById("cFeat").value==="true");
+    if(imgFileObj)fd.append("image",imgFileObj);
+    if(digFileObj)fd.append("file",digFileObj);
+    if(isEdit){
+      await api("PUT","/admin/products/"+editId,fd);
+      toast(" محصول ویرایش شد","ok");
+    }else{
+      await api("POST","/admin/products",fd);
+      toast(" محصول ایجاد شد","ok");
+    }
+    closeCreate();
+    document.getElementById("editProdId").value="";
+    resetCreateForm();
+    allProds=await api("GET","/products");renderProdTable();
+  }catch(e){toast(e.message,"err");}
+  finally{btn.disabled=false;lbl.textContent=isEdit?"ذخیره تغییرات":"ایجاد محصول";}
+}
+
+/* PRODUCTS TABLE */
+function setPF(btn,t){document.querySelectorAll("#mgmtFilts .mf").forEach(b=>b.classList.remove("on"));btn.classList.add("on");prodFilter=t;renderProdTable();}
+function renderProdTable(){
+  const q=(document.getElementById("mgmtSrch")||{}).value||"";
+  let p=[...allProds];
+  if(prodFilter==="featured")p=p.filter(x=>x.featured);
+  else if(prodFilter&&prodFilter!=="all")p=p.filter(x=>x.type===prodFilter);
+  if(q)p=p.filter(x=>x.title.includes(q)||x.description?.includes(q)||x.id.includes(q));
+  const cnt=document.getElementById("mgmtCnt");if(cnt)cnt.textContent=p.length+" محصول";
+  document.getElementById("prodTblBody").innerHTML=p.length?p.map(prod=>{
+    const disc=prod.discount?Math.round(prod.price*(1-prod.discount/100)):prod.price;
+    const thumb=prod.image&&prod.image.length>10
+      ?`<div class="prod-thumb"><img src="${prod.image}" alt="" draggable="false"><div class="prod-thumb-ico">${TI[prod.type]||"${ic('file-text',16)}"}</div></div>`
+      :`<div class="prod-thumb"><div class="prod-thumb-ico" style="position:static;font-size:1.2rem">${TI[prod.type]||"${ic('file-text',16)}"}</div></div>`;
+    return`<div class="prod-row">
+      ${thumb}
+      <div class="prod-info"><div class="nm">${prod.title}</div><div class="id">${prod.id}</div></div>
+      <span class="type-tag ${TC[prod.type]||"tt-article"}">${TL[prod.type]||prod.type}</span>
+      <div class="prod-price">${disc.toLocaleString()} ت</div>
+      <div>${prod.discount?`<span class="disc-tag">-${prod.discount}%</span>`:"—"}</div>
+      <div>${prod.featured?`<span class="feat-tag">${ic('star',16)} ویژه</span>`:"—"}</div>
+      <div class="prod-acts">
+        <button class="a-e" onclick="openEdit('${prod.id}')">ویرایش</button>
+        <button class="a-d" onclick="openDisc('${prod.id}','${prod.title.replace(/'/g,"\\'")}')">تخفیف</button>
+        <button class="a-x" onclick="delProd('${prod.id}')">حذف</button>
+      </div>
+    </div>`;
+  }).join(""):`<div class="empty"><div class="empty-i">${ic('package',16)}</div><p>محصولی یافت نشد</p></div>`;
+}
+
+async function delProd(id){
+  if(!confirm("حذف شود؟ قابل بازگشت نیست."))return;
+  try{await api("DELETE",`/admin/products/${id}`);toast("حذف شد","nfo");allProds=await api("GET","/products");renderProdTable();}catch(e){toast(e.message,"err");}
+}
+function openDisc(id,name){discTgt=id;document.getElementById("discNm").textContent=name;document.getElementById("discPct").value="";document.getElementById("discOvl").classList.add("on");}
+async function applyDisc(){
+  const pct=parseInt(document.getElementById("discPct").value);
+  if(isNaN(pct)||pct<0||pct>90){toast("درصد ۰ تا ۹۰","err");return;}
+  try{await api("PUT",`/admin/products/${discTgt}`,{discount:pct});toast(`${ic('check',16)} تخفیف ${pct}% اعمال شد`,"ok");closeOvl("discOvl");allProds=await api("GET","/products");renderProdTable();}catch(e){toast(e.message,"err");}
+}
+
+/* USERS */
+function renderUsers(){
+  const q=(document.getElementById("usrSrch")||{}).value||"";
+  let users=[...allUsers];
+  if(q)users=users.filter(u=>u.phone.includes(q)||(u.firstName||"").includes(q)||(u.lastName||"").includes(q));
+  const groups=users.map(u=>{
+    const ords=allOrders.filter(o=>o.userPhone===u.phone);
+    const total=ords.filter(o=>o.status==="paid").reduce((s,o)=>s+(o.amount||0),0);
+    const issues=ords.filter(o=>o.status!=="paid").length;
+    return{...u,ords,total,issues};
+  }).sort((a,b)=>b.ords.length-a.ords.length);
+  document.getElementById("userList").innerHTML=groups.length?groups.map(g=>{
+    const nm=(g.firstName||"")+(g.lastName?" "+g.lastName:"");
+    const init=(nm||g.phone).slice(0,2).toUpperCase();
+    return`<div class="ug">
+      <div class="ug-hd" onclick="this.nextElementSibling.classList.toggle('open')">
+        <div class="ug-av">${init}</div>
+        <div><div class="ug-ph">${g.phone}${g.isAdmin?`<span class="adm-badge-admin">ادمین</span>`:""}${g.banned?`<span class="adm-badge-banned">مسدود</span>`:""}</div><div class="ug-nm">${nm||"—"}</div>
+          <div class="ug-terms ${g.termsAccepted?"ut-yes":"ut-no"}">
+            <i class="ico-slot" data-ic="${g.termsAccepted?"check-circle":"alert"}"></i>
+            ${g.termsAccepted?"قوانین را پذیرفته":"قوانین را نپذیرفته"}
+          </div>
+        </div>
+        <div class="ug-sp"></div>
+        <div class="ug-stats">
+          <div class="ug-stat"><b>${g.purchaseCount||0}</b><small>خرید</small></div>
+          <div class="ug-stat"><b>${g.total.toLocaleString()}</b><small>تومان</small></div>
+          ${g.issues?`<div class="ug-stat"><b style="color:var(--red)">${g.issues}</b><small>مشکل</small></div>`:""}
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ug-arr"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="ug-body">
+        ${g.ords.length?g.ords.map(o=>`<div class="ug-ord">
+          <span>${TI[o.productType]||""}</span>
+          <span class="ug-ord-nm">${o.productTitle||"—"}</span>
+          <span class="ug-stag ${o.status==="paid"?"ugs-ok":o.status==="failed"?"ugs-fail":"ugs-pend"}">${o.status==="paid"?" پرداخت":o.status==="failed"?" ناموفق":"⏳ معلق"}</span>
+          <span class="ug-ord-amt">${(o.amount||0).toLocaleString()} ت</span>
+        </div>`).join(""):`<div style="padding:.75rem 1.1rem;font-size:12px;color:var(--faint)">سفارشی ثبت نشده</div>`}
+        <div class="ug-actions">
+          <button class="uga-btn ${g.isAdmin?'uga-demote':'uga-promote'}" onclick="toggleUserRole('${g.id}',${!g.isAdmin})">
+            <i class="ico-slot" data-ic="${g.isAdmin?'user':'shield-lock'}"></i>
+            ${g.isAdmin?'تنزل از ادمین':'ارتقا به ادمین'}
+          </button>
+          <button class="uga-btn ${g.banned?'uga-unban':'uga-ban'}" onclick="toggleUserBan('${g.id}',${!g.banned})">
+            <i class="ico-slot" data-ic="${g.banned?'unlock':'lock'}"></i>
+            ${g.banned?'رفع مسدودیت':'مسدودسازی کاربر'}
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }).join(""):`<div class="empty"><div class="empty-i">${ic('users',16)}</div><p>کاربری یافت نشد</p></div>`;
+}
+
+/* ─── Feature 4: مدیریت کاربران ─── */
+async function toggleUserRole(id,makeAdmin){
+  if(!confirm(makeAdmin?"این کاربر به ادمین ارتقا یابد؟":"دسترسی ادمین این کاربر گرفته شود؟"))return;
+  try{
+    await api("PUT",`/admin/users/${id}/role`,{isAdmin:makeAdmin});
+    toast(makeAdmin?"کاربر به ادمین ارتقا یافت":"دسترسی ادمین برداشته شد","ok");
+    allUsers=await api("GET","/admin/users");renderUsers();
+  }catch(e){toast(e.message||"خطا","err");}
+}
+async function toggleUserBan(id,ban){
+  if(!confirm(ban?"این کاربر مسدود شود؟ دیگر نمی‌تواند وارد شود.":"مسدودیت این کاربر برداشته شود؟"))return;
+  try{
+    await api("PUT",`/admin/users/${id}/ban`,{banned:ban});
+    toast(ban?"کاربر مسدود شد":"مسدودیت برداشته شد","ok");
+    allUsers=await api("GET","/admin/users");renderUsers();
+  }catch(e){toast(e.message||"خطا","err");}
+}
+
+/* ORDERS WITH ISSUES */
+function setOF(btn,f){document.querySelectorAll(".oft").forEach(b=>b.classList.remove("on"));btn.classList.add("on");ordFilter=f;renderOrders();}
+function renderOrders(){
+  let ords=[...allOrders];
+  if(ordFilter&&ordFilter!=="all")ords=ords.filter(o=>o.status===ordFilter);
+  const icoMap={paid:"",failed:"",pending:"⏳"};
+  const cls={paid:"paid-ring",failed:"failed-ring",pending:"pending-ring"};
+  const stag={paid:"paid-stag",failed:"failed-stag",pending:"pending-stag"};
+  const stagTxt={paid:"پرداخت شده",failed:"ناموفق",pending:"در انتظار"};
+  document.getElementById("ordList").innerHTML=ords.length?ords.map(o=>`<div class="ord-card ${o.status!=="paid"?o.status:""}">
+    <div class="ord-status-ring ${cls[o.status]||"paid-ring"}">${icoMap[o.status]||"?"}</div>
+    <div class="ord-meta">
+      <div class="ord-nm">${o.productTitle||"—"}</div>
+      <div class="ord-sub">${o.userPhone||"—"}${o.userName&&o.userName!==o.userPhone?" — "+o.userName:""}</div>
+      <div class="ord-ref">ref: ${o.paymentRef||o.id.slice(0,14)}</div>
+    </div>
+    <div class="ord-right">
+      <div class="ord-amt">${(o.amount||0).toLocaleString()} ت</div>
+      <span class="ord-stag ${stag[o.status]||"paid-stag"}">${stagTxt[o.status]||o.status}</span>
+      <div class="ord-date">${o.createdAt?new Date(o.createdAt).toLocaleDateString("fa-IR"):""}</div>
+      ${o.status==="failed"?`<button class="retry-btn" onclick="toast('قابلیت پرداخت مجدد در نسخه تولید','nfo')">پرداخت مجدد</button>`:""}
+    </div>
+  </div>`).join(""):`<div class="empty"><div class="empty-i">${ic('receipt',16)}</div><p>سفارشی در این وضعیت وجود ندارد</p></div>`;
+}
+
+/* DASHBOARD MINI ORDERS */
+function renderDash(){
+  const recent=allOrders.slice(0,6);
+  const issues=allOrders.filter(o=>o.status!=="paid").slice(0,6);
+  const mini=(o,isIssue=false)=>`<div class="mini-ord-card ${isIssue?"issue":""}">
+    <span style="font-size:1.2rem">${o.status==="paid"?"":o.status==="failed"?"":"⏳"}</span>
+    <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.productTitle||"—"}</div><div style="font-size:11px;color:var(--muted)">${o.userPhone||"—"}</div></div>
+    <div style="font-size:12px;font-weight:700;color:var(--goldL);flex-shrink:0">${(o.amount||0).toLocaleString()}</div>
+  </div>`;
+  document.getElementById("dOrdList").innerHTML=recent.map(o=>mini(o)).join("")||`<div class="empty"><div class="empty-i">${ic('clipboard',16)}</div><p>هنوز سفارشی ثبت نشده</p></div>`;
+  document.getElementById("dIssList").innerHTML=issues.length?issues.map(o=>mini(o,true)).join(""):`<div style="text-align:center;padding:1.5rem;color:var(--green);font-size:13px">${ic('check-circle',16)} هیچ مشکلی وجود ندارد</div>`;
+}
+
+/* INIT */
+/* ═══ ADMIN LIGHT MODE ═══ */
+/* The pill is fully CSS-driven by [data-theme]; JS only flips the attribute,
+   saves it, and keeps aria-checked in sync for the role="switch" button. */
+function toggleAdmTheme(){
+  const cur=document.documentElement.getAttribute("data-theme")||"dark";
+  const next=cur==="dark"?"light":"dark";
+  document.documentElement.setAttribute("data-theme",next);
+  const btn=document.getElementById("admThemeBtn");
+  if(btn)btn.setAttribute("aria-checked",next==="dark"?"true":"false");
+  localStorage.setItem("adm_theme",next);
+}
+/* Apply saved theme on load */
+(()=>{
+  const t=localStorage.getItem("adm_theme")||"dark";
+  document.documentElement.setAttribute("data-theme",t);
+  const btn=document.getElementById("admThemeBtn");
+  if(btn)btn.setAttribute("aria-checked",t==="dark"?"true":"false");
+})();
+
+async function init(){
+  try{
+    const [stats,prods,users,ords]=await Promise.all([api("GET","/admin/stats"),api("GET","/products"),api("GET","/admin/users"),api("GET","/admin/orders")]);
+    allProds=prods;allUsers=users;allOrders=ords;
+    document.getElementById("kU").textContent=stats.totalUsers;
+    document.getElementById("kO").textContent=stats.totalOrders;
+    document.getElementById("kR").textContent=Math.round(stats.totalRevenue/1000)+"K";
+    document.getElementById("kF").textContent=stats.failedOrders||0;
+    document.getElementById("kP").textContent=stats.pendingOrders||0;
+    const issues=(stats.failedOrders||0)+(stats.pendingOrders||0);
+    if(issues>0){
+      const b=document.getElementById("issueBadge");b.textContent=issues;b.classList.add("show");
+      const banner=document.getElementById("oiBanner");banner.classList.add("show");
+      document.getElementById("oiBannerTit").textContent=`${issues} سفارش نیاز به بررسی دارد`;
+      document.getElementById("oiBannerSub").textContent=`${stats.failedOrders||0} ناموفق، ${stats.pendingOrders||0} در انتظار پرداخت`;
+    }
+    const f=ords.filter(o=>o.status==="failed").length,p=ords.filter(o=>o.status==="pending").length,pd=ords.filter(o=>o.status==="paid").length;
+    document.getElementById("ocAll").textContent=ords.length;
+    document.getElementById("ocPaid").textContent=pd;
+    document.getElementById("ocFail").textContent=f;
+    document.getElementById("ocPend").textContent=p;
+    renderTopProduct(stats.topProduct);
+    renderProdTable();renderUsers();renderOrders();renderDash();
+  }catch(e){toast("خطا در بارگذاری: "+e.message,"err");}
+}
+
+/* ─── Top-selling product widget (dashboard) ─── */
+function renderTopProduct(tp){
+  const el=document.getElementById("topProductWidget");if(!el)return;
+  if(!tp){el.innerHTML="";return;}
+  el.innerHTML=`<div class="topprod">
+    <div class="topprod-ico">${ic('star',18)}</div>
+    <div class="topprod-body">
+      <div class="topprod-l">پرفروش‌ترین محصول</div>
+      <div class="topprod-t">${escapeHtmlA(tp.title||"—")}</div>
+    </div>
+    <div class="topprod-badge">${(tp.count||0).toLocaleString("fa-IR")} فروش</div>
+  </div>`;
+  if(typeof hydrateIcons==="function")hydrateIcons(el);
+}
+
+/* ─── Revenue analytics modal ─── */
+const faMoney=n=>Math.round(n||0).toLocaleString("fa-IR");
+async function openRevenueModal(){
+  const ov=document.getElementById("revModal");if(!ov)return;
+  ov.classList.add("on");
+  const grid=document.getElementById("revGrid");
+  grid.innerHTML=`<div class="tkchat-loading">${ic('clock',16)} در حال بارگذاری…</div>`;
+  document.getElementById("revTop").innerHTML="";
+  try{
+    const r=await api("GET","/admin/revenue");
+    const cells=[
+      {l:"امروز",v:r.today},
+      {l:"۷ روز اخیر",v:r.last7Days},
+      {l:"این ماه",v:r.thisMonth},
+      {l:"امسال",v:r.thisYear},
+      {l:"کل (از آخرین ریست)",v:r.total,wide:true}
+    ];
+    grid.innerHTML=cells.map(x=>`<div class="rev-cell${x.wide?' rev-cell-wide':''}"><div class="rev-cell-l">${x.l}</div><div class="rev-cell-v">${faMoney(x.v)} <span>تومان</span></div></div>`).join("");
+    document.getElementById("revSub").textContent=`${(r.orderCount||0).toLocaleString("fa-IR")} فروش موفق`+(r.resetAt?` · آخرین ریست: ${new Date(r.resetAt).toLocaleDateString("fa-IR")}`:"");
+    const tp=document.getElementById("revTop");
+    tp.innerHTML=r.topProduct?`<div class="rev-top-card">
+      <div class="rev-top-ico">${ic('star',16)}</div>
+      <div class="rev-top-info"><div class="rev-top-l">پرفروش‌ترین محصول</div><div class="rev-top-t">${escapeHtmlA(r.topProduct.title||"—")}</div></div>
+      <div class="rev-top-m">${(r.topProduct.count||0).toLocaleString("fa-IR")} فروش<br><span>${faMoney(r.topProduct.revenue)} ت</span></div>
+    </div>`:"";
+    if(typeof hydrateIcons==="function")hydrateIcons(ov);
+  }catch(e){grid.innerHTML=`<div class="empty"><div class="empty-i">${ic('alert',16)}</div><p>${e.message}</p></div>`;}
+}
+async function resetRevenue(){
+  /* explicit confirmation before any destructive-looking action */
+  if(!confirm("واقعا موافق هستید یا خیر؟\n\nبا تأیید، درآمد انباشته صفر می‌شود. (سفارش‌ها و خریدهای کاربران حذف نمی‌شوند.)")) return;
+  const btn=document.getElementById("revResetBtn");if(btn)btn.disabled=true;
+  try{
+    await api("POST","/admin/revenue/reset",{});
+    toast("درآمد انباشته ریست شد","ok");
+    await openRevenueModal();
+    /* refresh the dashboard KPI + top widget behind the modal */
+    try{const s=await api("GET","/admin/stats");document.getElementById("kR").textContent=Math.round(s.totalRevenue/1000)+"K";renderTopProduct(s.topProduct);}catch{}
+  }catch(e){toast(e.message,"err");}
+  finally{if(btn)btn.disabled=false;}
+}
+
+/* ═══════════ PRODUCT BUNDLES (admin) ═══════════ */
+let bundleSel=new Set();
+async function openBundle(){
+  bundleSel.clear();
+  document.getElementById("bTit").value="";
+  document.getElementById("bDes").value="";
+  document.getElementById("bPr").value="";
+  document.getElementById("bFeat").value="false";
+  /* ensure the product list is loaded before building the picker */
+  if(!allProds||!allProds.length){
+    try{allProds=await api("GET","/products");}catch{}
+  }
+  /* render the product picker — exclude existing bundles */
+  const picker=document.getElementById("bundlePicker");
+  const items=(allProds||[]).filter(p=>p.type!=="bundle");
+  if(!items.length){
+    picker.innerHTML='<div class="bundle-pick-empty">ابتدا حداقل ۲ محصول بسازید</div>';
+  }else{
+    picker.innerHTML=items.map(p=>`
+      <label class="bundle-pick" data-id="${p.id}" data-price="${p.price||0}">
+        <input type="checkbox" onchange="toggleBundleItem('${p.id}',this.checked)">
+        <span class="bp-tp">${TYPE_LBL(p.type)}</span>
+        <span class="bp-nm">${escapeHtmlA(p.title)}</span>
+        <span class="bp-pr">${(p.price||0).toLocaleString("fa-IR")} ت</span>
+      </label>`).join("");
+  }
+  updateBundleSum();
+  document.getElementById("bundleOvl").classList.add("on");
+  if(typeof hydrateIcons==="function")hydrateIcons(document.getElementById("bundleOvl"));
+}
+function closeBundle(){document.getElementById("bundleOvl").classList.remove("on");clearBImg();}
+
+/* ─── Feature 6: تصویر پکیج ─── */
+let bImgFileObj=null,bImgUrl="";
+function handleBImgChange(e){
+  const file=e.target.files[0];if(!file)return;
+  if(!file.type.startsWith("image/")){toast("فقط فایل تصویری مجاز است","err");return;}
+  if(file.size>50*1024*1024){toast("حجم تصویر بیش از ۵۰ مگابایت","err");return;}
+  bImgFileObj=file;
+  if(bImgUrl)URL.revokeObjectURL(bImgUrl);
+  bImgUrl=URL.createObjectURL(file);
+  document.getElementById("bImgPvwImg").src=bImgUrl;
+  document.getElementById("bImgPh").style.display="none";
+  document.getElementById("bImgPvw").style.display="block";
+}
+function handleBImgDrop(e){
+  e.preventDefault();document.getElementById("bImgZone").classList.remove("drag");
+  const file=e.dataTransfer.files[0];
+  if(file&&file.type.startsWith("image/")){
+    const dt=new DataTransfer();dt.items.add(file);
+    document.getElementById("bImgFile").files=dt.files;
+    handleBImgChange({target:{files:[file]}});
+  }
+}
+function clearBImg(e){
+  if(e)e.stopPropagation();
+  bImgFileObj=null;
+  if(bImgUrl){URL.revokeObjectURL(bImgUrl);bImgUrl="";}
+  const f=document.getElementById("bImgFile");if(f)f.value="";
+  const pv=document.getElementById("bImgPvwImg");if(pv)pv.src="";
+  const ph=document.getElementById("bImgPh");if(ph)ph.style.display="block";
+  const pw=document.getElementById("bImgPvw");if(pw)pw.style.display="none";
+}
+function TYPE_LBL(t){return ({book:"کتاب",chapter:"فصل",image:"تصویر",article:"مقاله",bundle:"پکیج"})[t]||t;}
+function escapeHtmlA(s){return String(s||"").replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function toggleBundleItem(id,on){
+  if(on)bundleSel.add(id);else bundleSel.delete(id);
+  const lbl=document.querySelector(`.bundle-pick[data-id="${id}"]`);
+  if(lbl)lbl.classList.toggle("picked",on);
+  updateBundleSum();
+}
+function updateBundleSum(){
+  let sum=0;
+  bundleSel.forEach(id=>{
+    const lbl=document.querySelector(`.bundle-pick[data-id="${id}"]`);
+    if(lbl)sum+=parseInt(lbl.dataset.price)||0;
+  });
+  const price=parseInt(document.getElementById("bPr").value)||0;
+  const el=document.getElementById("bundleSum");
+  let txt=`${bundleSel.size.toLocaleString("fa-IR")} محصول انتخاب شده — مجموع قیمت تکی: ${sum.toLocaleString("fa-IR")} تومان`;
+  if(price>0&&sum>price){
+    const save=Math.round((1-price/sum)*100);
+    txt+=` — صرفه‌جویی ${save.toLocaleString("fa-IR")}٪`;
+  }
+  el.textContent=txt;
+}
+async function createBundle(){
+  const title=document.getElementById("bTit").value.trim();
+  const price=parseInt(document.getElementById("bPr").value);
+  if(!title){toast("عنوان پکیج الزامی است","err");return;}
+  if(!price||price<=0){toast("قیمت پکیج الزامی است","err");return;}
+  if(bundleSel.size<2){toast("حداقل ۲ محصول انتخاب کنید","err");return;}
+  const btn=document.getElementById("btnBundle");btn.disabled=true;
+  try{
+    const fd=new FormData();
+    fd.append("title",title);
+    fd.append("description",document.getElementById("bDes").value.trim());
+    fd.append("price",price);
+    fd.append("featured",document.getElementById("bFeat").value);
+    fd.append("items",JSON.stringify([...bundleSel]));
+    if(bImgFileObj)fd.append("image",bImgFileObj);
+    await api("POST","/admin/bundles",fd);
+    toast(" پکیج ساخته شد","ok");
+    closeBundle();
+    allProds=await api("GET","/products");
+    loadBundles();
+  }catch(e){toast(e.message,"err");}
+  finally{btn.disabled=false;}
+}
+async function loadBundles(){
+  const box=document.getElementById("bundleList");
+  if(!box)return;
+  try{
+    const bundles=await api("GET","/admin/bundles");
+    if(!bundles.length){
+      box.innerHTML=`<div class="empty"><div class="empty-i">${ic('package',16)}</div><p>هنوز پکیجی ساخته نشده است</p></div>`;
+    }else{
+      box.innerHTML=bundles.map(b=>`
+        <div class="bundle-card">
+          <div class="bundle-card-hd">
+            <div class="bundle-card-t">${escapeHtmlA(b.title)}</div>
+            <button class="bundle-del" onclick="delBundle('${b.id}')"><i class="ico-slot" data-ic="x"></i></button>
+          </div>
+          <div class="bundle-card-items">
+            ${(b.items||[]).map(it=>`<span class="bundle-chip">${TYPE_LBL(it.type)} · ${escapeHtmlA(it.title)}</span>`).join("")}
+          </div>
+          <div class="bundle-card-ft">
+            <span class="bundle-price">${(b.price||0).toLocaleString("fa-IR")} تومان</span>
+            ${b.originalPrice?`<span class="bundle-orig">${b.originalPrice.toLocaleString("fa-IR")}</span><span class="bundle-save">${b.discount}٪ تخفیف</span>`:""}
+          </div>
+        </div>`).join("");
+    }
+  }catch(e){
+    box.innerHTML=`<div class="empty"><div class="empty-i">${ic('alert',16)}</div><p>${e.message}</p></div>`;
+  }
+  if(typeof hydrateIcons==="function")hydrateIcons(box);
+}
+async function delBundle(id){
+  if(!confirm("این پکیج حذف شود؟"))return;
+  try{await api("DELETE","/admin/bundles/"+id);toast("پکیج حذف شد","ok");
+    allProds=await api("GET","/products");loadBundles();
+  }catch(e){toast(e.message,"err");}
+}
+
+/* ═══════════ SUPPORT TICKETS (admin) ═══════════ */
+let allTickets=[],ticketFilter="all",achatId=null,achatImgObj=null,achatImgUrl="";
+let achatPoll=null,achatSig="";
+function stopAchatPoll(){if(achatPoll){clearInterval(achatPoll);achatPoll=null;}}
+function startAchatPoll(id){
+  stopAchatPoll();
+  achatPoll=setInterval(async()=>{
+    const ov=document.getElementById("achatOvl");
+    if(!ov||!ov.classList.contains("on")||achatId!==id){stopAchatPoll();return;}
+    try{
+      const t=await api("GET","/admin/tickets/"+encodeURIComponent(id));
+      const sig=t.status+":"+(t.messages?t.messages.length:0);
+      if(sig!==achatSig)renderAdminChat(t);   /* re-render only on real change */
+    }catch{}
+  },6000);
+}
+function setTF(btn,f){
+  document.querySelectorAll(".tkadm-ftabs .tkf").forEach(b=>b.classList.remove("on"));
+  btn.classList.add("on");ticketFilter=f;renderAdminTickets();
+}
+/* status → {class,label} from the admin's point of view */
+function tkInfoAdmin(s){
+  if(s==="answered")return{c:"tk-answered",l:"پاسخ داده شد"};
+  if(s==="waiting") return{c:"tk-waiting", l:"در انتظار پاسخ مشتری"};
+  if(s==="closed")  return{c:"tk-closed",  l:"بسته شده"};
+  return{c:"tk-open",l:"در انتظار بررسی"};
+}
+const isPending=t=>t.status==="pending"||t.status==="open";
+async function loadAdminTickets(){
+  try{allTickets=await api("GET","/admin/tickets");}catch(e){allTickets=[];}
+  renderAdminTickets();
+}
+function renderAdminTickets(){
+  const box=document.getElementById("tkAdmList");
+  if(!box)return;
+  const pending=allTickets.filter(isPending).length;
+  const ans=allTickets.filter(t=>t.status==="answered").length;
+  const wait=allTickets.filter(t=>t.status==="waiting").length;
+  document.getElementById("tcAll").textContent=allTickets.length||"";
+  document.getElementById("tcOpen").textContent=pending||"";
+  document.getElementById("tcAns").textContent=ans||"";
+  const tcWait=document.getElementById("tcWait");if(tcWait)tcWait.textContent=wait||"";
+  const badge=document.getElementById("ticketBadge");
+  if(badge)badge.style.display=pending>0?"flex":"none";
+  let list=allTickets;
+  if(ticketFilter==="pending")list=allTickets.filter(isPending);
+  else if(ticketFilter!=="all")list=allTickets.filter(t=>t.status===ticketFilter);
+  if(!list.length){
+    box.innerHTML=`<div class="empty"><div class="empty-i">${ic('message',16)}</div><p>تیکتی یافت نشد</p></div>`;
+    if(typeof hydrateIcons==="function")hydrateIcons(box);
+    return;
+  }
+  box.innerHTML=list.map(t=>{
+    const st=tkInfoAdmin(t.status);
+    const msgs=t.messages||[];
+    const last=msgs.length?msgs[msgs.length-1]:null;
+    const preview=last?(last.text||(last.image?"📎 تصویر":"")):"";
+    const when=t.repliedAt||t.createdAt;
+    const closed=t.status==="closed";
+    const actBtn=closed
+      ? `<button class="tkadm-actbtn reopen" onclick="reopenTicketCard(event,'${t.id}')">${ic('unlock',14)} بازگشایی</button>`
+      : `<button class="tkadm-actbtn close" onclick="closeTicketCard(event,'${t.id}')">${ic('lock',14)} بستن تیکت</button>`;
+    return `<div class="tkadm-card${closed?' is-closed':''}">
+      <div class="tkadm-card-body" onclick="openAdminChat('${t.id}')">
+        <div class="tkadm-av">${escapeHtmlA((t.userName||"؟").slice(0,1))}</div>
+        <div class="tkadm-card-main">
+          <div class="tkadm-card-top">
+            <span class="tkadm-card-subj">${escapeHtmlA(t.subject)}</span>
+            <span class="tk-badge ${st.c}">${st.l}</span>
+          </div>
+          <div class="tkadm-card-user">${escapeHtmlA(t.userName)} · ${escapeHtmlA(t.userPhone)}</div>
+          <div class="tkadm-card-preview">${last&&last.sender==="admin"?`${ic('check-circle',12)} `:""}${escapeHtmlA(preview).slice(0,90)}</div>
+          <div class="tkadm-card-meta">${ic('message',12)} ${msgs.length} پیام · ${when?new Date(when).toLocaleDateString("fa-IR"):""}</div>
+        </div>
+      </div>
+      <div class="tkadm-card-actions">
+        ${actBtn}
+        <button class="tkadm-actbtn open" onclick="openAdminChat('${t.id}')">${ic('message',14)} گفتگو</button>
+      </div>
+    </div>`;
+  }).join("");
+  if(typeof hydrateIcons==="function")hydrateIcons(box);
+}
+/* close / reopen directly from a ticket card (stops the card's open-chat click) */
+async function ticketCardSetStatus(id,status){
+  try{
+    await api("PUT","/admin/tickets/"+encodeURIComponent(id),{status});
+    toast(status==="closed"?"تیکت بسته شد":"تیکت بازگشایی شد","ok");
+    await loadAdminTickets();
+    /* if this ticket's chat is open, re-render it so the composer locks/unlocks instantly */
+    if(achatId===id){try{const t=await api("GET","/admin/tickets/"+encodeURIComponent(id));renderAdminChat(t);}catch{}}
+  }catch(e){toast(e.message,"err");}
+}
+function closeTicketCard(ev,id){if(ev){ev.stopPropagation();ev.preventDefault();}ticketCardSetStatus(id,"closed");}
+function reopenTicketCard(ev,id){if(ev){ev.stopPropagation();ev.preventDefault();}ticketCardSetStatus(id,"answered");}
+async function openAdminChat(id){
+  achatId=id;
+  const ov=document.getElementById("achatOvl");if(!ov)return;
+  ov.classList.add("on");
+  achatClearImg();
+  const ta=document.getElementById("achatMsg");if(ta)ta.value="";
+  const body=document.getElementById("achatBody");
+  if(body)body.innerHTML=`<div class="tkchat-loading">${ic('clock',16)} در حال بارگذاری گفتگو…</div>`;
+  try{const t=await api("GET","/admin/tickets/"+encodeURIComponent(id));renderAdminChat(t);startAchatPoll(id);}
+  catch(e){if(body)body.innerHTML=`<div class="empty"><div class="empty-i">${ic('alert',16)}</div><p>${e.message}</p></div>`;}
+}
+function closeAdminChat(){stopAchatPoll();closeOvl("achatOvl");achatId=null;achatClearImg();}
+/* modern status controls: a segmented control + a close/reopen action */
+function renderAchatStatus(t){
+  const bar=document.getElementById("achatStatusbar");
+  if(!bar)return;
+  if(t.status==="closed"){
+    bar.innerHTML=`<span class="achat-closed-badge">${ic('lock',13)} این تیکت بسته شده است</span>`+
+      `<button class="achat-close-btn reopen" onclick="setAdminStatus('answered')">${ic('unlock',13)} بازگشایی تیکت</button>`;
+  }else{
+    const opts=[{v:"pending",l:"در انتظار"},{v:"answered",l:"پاسخ‌داده"},{v:"waiting",l:"منتظر مشتری"}];
+    const seg=opts.map(o=>`<button class="achat-seg ${t.status===o.v?"on":""}" onclick="setAdminStatus('${o.v}')">${o.l}</button>`).join("");
+    /* close button is ALWAYS available for any open ticket (not only "answered") */
+    const closeBtn=`<button class="achat-close-btn" onclick="setAdminStatus('closed')">${ic('lock',13)} بستن تیکت</button>`;
+    bar.innerHTML=`<span class="achat-sb-lbl">وضعیت:</span><div class="achat-seg-group">${seg}</div>${closeBtn}`;
+  }
+  if(typeof hydrateIcons==="function")hydrateIcons(bar);
+}
+function renderAdminChat(t){
+  achatId=t.id;
+  const subj=document.getElementById("achatSubj");if(subj)subj.textContent=t.subject;
+  const usr=document.getElementById("achatUser");if(usr)usr.textContent=(t.userName||"")+" · "+(t.userPhone||"");
+  renderAchatStatus(t);
+  const body=document.getElementById("achatBody");if(!body)return;
+  const msgs=t.messages||[];
+  body.innerHTML=msgs.map(m=>{
+    const admin=m.sender==="admin";
+    const img=m.image?`<img class="tkmsg-img" src="${m.image}" onclick="window.open('${m.image}','_blank')" alt="" loading="lazy" decoding="async">`:"";
+    const txt=m.text?`<div class="tkmsg-text">${escapeHtmlA(m.text)}</div>`:"";
+    const who=admin?"شما (پشتیبانی)":"کاربر";
+    return `<div class="tkmsg ${admin?"tkmsg-me":"tkmsg-them"}">
+      <div class="tkmsg-bubble"><div class="tkmsg-who">${who}</div>${img}${txt}<div class="tkmsg-time">${m.createdAt?new Date(m.createdAt).toLocaleString("fa-IR",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}):""}</div></div>
+    </div>`;
+  }).join("")||`<div class="tkchat-loading">${ic('message',16)} پیامی نیست</div>`;
+  /* closed ticket → lock the composer; admin must reopen to reply */
+  const closed=t.status==="closed";
+  if(closed)body.insertAdjacentHTML("beforeend",`<div class="tkmsg-locked">${ic('lock',14)} این تیکت بسته شده است — برای پاسخ، آن را بازگشایی کنید</div>`);
+  const ta=document.getElementById("achatMsg"),sb=document.getElementById("achatSend"),att=document.getElementById("achatImg");
+  if(ta){ta.disabled=closed;ta.placeholder=closed?"تیکت بسته است":"پاسخ خود را بنویسید…";}
+  if(sb)sb.disabled=closed;
+  if(att)att.disabled=closed;
+  const foot=ta?ta.closest(".tkchat-foot"):null;if(foot)foot.classList.toggle("chat-locked",closed);
+  achatSig=t.status+":"+(t.messages?t.messages.length:0);
+  if(typeof hydrateIcons==="function")hydrateIcons(body);
+  body.scrollTop=body.scrollHeight;
+}
+function achatHandleImg(e){
+  const f=e.target.files[0];if(!f)return;
+  if(!f.type.startsWith("image/")){toast("فقط فایل تصویری مجاز است","err");return;}
+  if(f.size>50*1024*1024){toast("حجم تصویر بیش از ۵۰ مگابایت","err");return;}
+  achatImgObj=f;
+  if(achatImgUrl)URL.revokeObjectURL(achatImgUrl);
+  achatImgUrl=URL.createObjectURL(f);
+  const prev=document.getElementById("achatImgPrev"),wrap=document.getElementById("achatImgWrap");
+  if(prev)prev.src=achatImgUrl;if(wrap)wrap.style.display="flex";
+}
+function achatClearImg(){
+  achatImgObj=null;
+  if(achatImgUrl){URL.revokeObjectURL(achatImgUrl);achatImgUrl="";}
+  const inp=document.getElementById("achatImg");if(inp)inp.value="";
+  const wrap=document.getElementById("achatImgWrap");if(wrap)wrap.style.display="none";
+}
+async function sendAdminReply(){
+  if(!achatId)return;
+  const ta=document.getElementById("achatMsg");
+  const text=ta?ta.value.trim():"";
+  if(!text&&!achatImgObj){toast("پیام خالی است","err");return;}
+  const btn=document.getElementById("achatSend");if(btn)btn.disabled=true;
+  try{
+    const fd=new FormData();
+    fd.append("message",text);
+    if(achatImgObj)fd.append("image",achatImgObj);
+    const r=await api("POST","/admin/tickets/"+encodeURIComponent(achatId)+"/messages",fd);
+    if(ta)ta.value="";achatClearImg();
+    renderAdminChat(r.ticket);
+    loadAdminTickets();
+  }catch(e){toast(e.message,"err");}
+  finally{if(btn)btn.disabled=false;}
+}
+async function setAdminStatus(status){
+  if(!achatId)return;
+  try{
+    await api("PUT","/admin/tickets/"+encodeURIComponent(achatId),{status});
+    /* full re-render so the composer locks/unlocks INSTANTLY (not just the badge) */
+    const t=await api("GET","/admin/tickets/"+encodeURIComponent(achatId));
+    renderAdminChat(t);
+    loadAdminTickets();
+    toast(status==="closed"?"تیکت بسته شد":"وضعیت تیکت تغییر کرد","ok");
+  }catch(e){toast(e.message,"err");}
+}
+
+(async()=>{
+  const ok=await checkAuth();
+  if(ok){document.getElementById("adm-content").style.display="block";await init();}
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+﻿# Dependencies
+node_modules/
+
+# Environment / secrets - NEVER commit
+.env
+.env.local
+.env.*.local
+backend/.env
+
+# Local database & user uploads
+db.json
+backend/uploads/
+backend/tmp/
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
