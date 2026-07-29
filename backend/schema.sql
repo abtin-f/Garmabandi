@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS users (
   purchases       LONGTEXT,                       -- JSON array of product ids
   termsAccepted   TINYINT(1)   NOT NULL DEFAULT 0,
   termsAcceptedAt VARCHAR(40)  DEFAULT NULL,
+  phoneVerified   TINYINT(1)   NOT NULL DEFAULT 0,   -- شماره با کد پیامکی تایید شده
   createdAt       VARCHAR(40)  NOT NULL,
   INDEX idx_users_phone (phone)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

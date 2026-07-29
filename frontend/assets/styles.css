@@ -1448,3 +1448,91 @@ button .ic,a .ic,.cta-a .ic,.cta-b .ic,.nb .ic{vertical-align:-.18em}
   }
   .bk3d{animation:none!important}
 }
+
+
+/* ═══════════════════════════════════════════════════════════
+   OTP — مرحله‌ی تایید کد پیامکی + فراموشی رمز
+   همه‌ی رنگ‌ها از متغیرهای تم می‌آیند، پس dark و light
+   هر دو خودکار درست کار می‌کنند.
+   ═══════════════════════════════════════════════════════════ */
+.otp-head{text-align:center;margin-bottom:.2rem}
+.otp-ico{width:52px;height:52px;margin:0 auto .8rem;border-radius:15px;background:rgba(212,146,10,.1);border:1px solid rgba(212,146,10,.25);display:grid;place-items:center;color:var(--gold)}
+.otp-ico svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8}
+.otp-ttl{font-size:1.05rem;font-weight:800;margin-bottom:.4rem}
+.otp-sub{font-size:12.5px;color:var(--muted);line-height:1.95}
+.otp-sub b{color:var(--text);font-weight:700;direction:ltr;display:inline-block;unicode-bidi:embed;letter-spacing:.02em}
+
+/* ─── صحنه‌ی انیمیشن ─── */
+.otp-stage{position:relative;height:130px;margin:.6rem 0 .2rem;display:grid;place-items:center;overflow:hidden}
+.otp-hid{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:none;background:transparent;font-size:16px;color:transparent;caret-color:transparent;cursor:pointer;z-index:4;padding:0}
+.otp-hid:focus{outline:none}
+.otp-cells{display:flex;gap:9px;direction:ltr;transform-origin:50% 50%;will-change:transform}
+.otp-cell{
+  width:44px;height:56px;border-radius:12px;background:var(--inp);
+  border:1.5px solid var(--inp-bdr);display:grid;place-items:center;
+  font-size:1.4rem;font-weight:800;color:var(--text);
+  transition:border-color .18s,background .18s,box-shadow .2s,transform .52s var(--ease-out),opacity .3s;
+  will-change:transform}
+.otp-cell.filled{border-color:rgba(212,146,10,.48);background:rgba(212,146,10,.06)}
+.otp-cell.cur{border-color:var(--gold);box-shadow:0 0 0 3px rgba(212,146,10,.14)}
+[data-theme="light"] .otp-cell.cur{box-shadow:0 0 0 3px rgba(212,146,10,.2)}
+.otp-dg{display:block;animation:otpDg .3s var(--ease-out)}
+@keyframes otpDg{from{opacity:0;transform:translateY(10px) scale(.65)}to{opacity:1;transform:none}}
+.otp-crt{width:2px;height:21px;background:var(--gold);border-radius:2px;animation:otpBlink 1.05s steps(1) infinite}
+@keyframes otpBlink{0%,49%{opacity:1}50%,100%{opacity:0}}
+
+/* مرحله ۱ — چیدمان پنج‌ضلعی و دو دور چرخش (۲.۱ ثانیه)
+   ⚠ سه مقدار باید هماهنگ بمانند: مدت otpSpin، عدد rotate (هر ۳۶۰ = یک دور)
+   و otpWait(2150) در otpVerify() داخل app.js */
+.otp-stage.spin .otp-hid{pointer-events:none}
+.otp-stage.spin .otp-cell{transform:translate(var(--tx),var(--ty)) scale(.62);transition-delay:var(--dl);border-color:rgba(212,146,10,.55);background:rgba(212,146,10,.09)}
+.otp-stage.spin .otp-cells{animation:otpSpin 2.1s cubic-bezier(.5,.03,.45,1) .34s both}
+@keyframes otpSpin{from{transform:rotate(0)}to{transform:rotate(720deg)}}
+
+/* مرحله ۲ — ادغام در مرکز */
+.otp-stage.merge .otp-cell{transform:translate(var(--mx),var(--my)) scale(.1);opacity:0;transition:transform .42s cubic-bezier(.6,0,.85,.4),opacity .38s ease-in;transition-delay:0s}
+
+/* مرحله ۳ — تیک سبز با موج */
+.otp-ok{position:absolute;width:60px;height:60px;border-radius:50%;background:var(--green);display:grid;place-items:center;opacity:0;transform:scale(.15);transition:opacity .2s,transform .55s var(--ease-out);z-index:2}
+.otp-ok svg{width:30px;height:30px;stroke:#fff;fill:none;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:36;stroke-dashoffset:36}
+.otp-stage.done .otp-ok{opacity:1;transform:scale(1)}
+.otp-stage.done .otp-ok svg{animation:otpTick .4s .18s ease forwards}
+@keyframes otpTick{to{stroke-dashoffset:0}}
+.otp-ok::before,.otp-ok::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid var(--green);opacity:0}
+.otp-stage.done .otp-ok::before{animation:otpWave .95s .12s ease-out forwards}
+.otp-stage.done .otp-ok::after{animation:otpWave .95s .36s ease-out forwards}
+@keyframes otpWave{from{transform:scale(1);opacity:.6}to{transform:scale(2.6);opacity:0}}
+
+/* خطا — لرزش */
+.otp-stage.bad .otp-cells{animation:otpShake .45s ease}
+.otp-stage.bad .otp-cell{border-color:rgba(216,53,53,.55);background:rgba(216,53,53,.07)}
+@keyframes otpShake{0%,100%{transform:translateX(0)}17%{transform:translateX(-9px)}36%{transform:translateX(8px)}56%{transform:translateX(-5px)}78%{transform:translateX(3px)}}
+
+/* پیام خطا + پاورقی */
+.otp-err{min-height:17px;text-align:center;font-size:12px;font-weight:600;color:var(--red);margin-bottom:.55rem;opacity:0;transition:opacity .2s}
+.otp-err.on{opacity:1}
+.otp-foot{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-top:.75rem}
+.otp-link{background:none;border:none;font-family:var(--f);font-size:12px;font-weight:700;color:var(--gold);cursor:pointer;padding:4px 2px;transition:color .18s}
+.otp-link:hover{color:var(--goldL)}
+.otp-link:disabled{color:var(--faint);cursor:default}
+.otp-timer{font-size:11.5px;color:var(--faint);font-variant-numeric:tabular-nums}
+
+/* لینک «رمزم را فراموش کرده‌ام» زیر فرم ورود */
+.auth-alt{text-align:center;margin-top:.65rem}
+.auth-alt button{background:none;border:none;font-family:var(--f);font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:color .18s;padding:3px}
+.auth-alt button:hover{color:var(--gold)}
+
+/* هشدار نام تکراری / شماره بدون حساب */
+.auth-warn{display:none;align-items:flex-start;gap:.5rem;background:rgba(216,53,53,.08);border:1px solid rgba(216,53,53,.22);border-radius:9px;padding:.7rem .8rem;margin-bottom:.85rem;font-size:12px;line-height:1.85;color:var(--red)}
+.auth-warn.on{display:flex;animation:otpDg .3s var(--ease-out)}
+.auth-warn svg{width:15px;height:15px;flex-shrink:0;margin-top:.25rem;stroke:currentColor;fill:none;stroke-width:2}
+.auth-warn b{font-weight:800}
+
+@media (max-width:400px){
+  .otp-cell{width:40px;height:52px;font-size:1.25rem}
+  .otp-cells{gap:7px}
+}
+@media (prefers-reduced-motion:reduce){
+  .otp-stage.spin .otp-cells{animation-duration:.01s}
+  .otp-cell,.otp-ok{transition-duration:.01s}
+}

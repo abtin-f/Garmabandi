@@ -31,10 +31,11 @@ const JSON_FIELDS = {
    اجازه می‌دهد آپدیت روی هاست بدون اجرای دستی ALTER انجام شود */
 const AUTO_COLUMNS = {
   tickets: [['messages', 'LONGTEXT']],
+  users:   [['phoneVerified', 'TINYINT(1) NOT NULL DEFAULT 0']],
 };
 /* ستون‌های boolean (در MySQL به‌صورت 0/1) */
 const BOOL_FIELDS = {
-  users:    ['isAdmin', 'termsAccepted', 'banned'],
+  users:    ['isAdmin', 'termsAccepted', 'banned', 'phoneVerified'],
   products: ['featured'],
 };
 const TABLES = Object.keys(JSON_FIELDS);

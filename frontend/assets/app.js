@@ -70,7 +70,9 @@ async function api(m,p,b){
     o.headers["Content-Type"]="application/json";
     o.body=JSON.stringify(b);
   }
-  const r=await fetch(API+p,o);const d=await r.json();if(!r.ok)throw new Error(d.error||"خطا");return d;
+  const r=await fetch(API+p,o);const d=await r.json().catch(()=>({}));
+  if(!r.ok){const e=new Error(d.error||"خطا");e.code=d.code;e.status=r.status;e.retryAfter=d.retryAfter;throw e;}
+  return d;
 }
 function toast(msg,t="nfo"){const el=document.createElement("div");el.className="tst "+t;el.textContent=msg;document.getElementById("toasts").appendChild(el);setTimeout(()=>{el.style.opacity="0";el.style.transition="opacity .3s";setTimeout(()=>el.remove(),300);},3200);}
 function closeOvl(id){document.getElementById(id).classList.remove("on");}
@@ -134,18 +136,368 @@ function renderNav(){if(typeof renderMobMenuAuth==="function")setTimeout(renderM
   window.addEventListener("scroll",()=>{if(!ticking){ticking=true;requestAnimationFrame(update);}},{passive:true});
 })();
 
-/* AUTH */
-function openAuth(tab){document.getElementById("authOvl").classList.add("on");swA(tab);}
-function swA(t){document.getElementById("atL").classList.toggle("on",t==="login");document.getElementById("atR").classList.toggle("on",t==="register");document.getElementById("fL").style.display=t==="login"?"":"none";document.getElementById("fR").style.display=t==="register"?"":"none";}
+/* ═══════════════════════════════════════════════════════════
+   AUTH — ورود / ثبت‌نام / تایید کد پیامکی / فراموشی رمز
+   ───────────────────────────────────────────────────────────
+   مرحله‌های تایید کد و فراموشی رمز به‌جای تکرار در ۹ فایل HTML،
+   یک‌بار از همین‌جا داخل مودال #authOvl تزریق می‌شوند.
+   ═══════════════════════════════════════════════════════════ */
+const AUTH_PANELS=["fL","fR","fF","fO","fP"];
+
+/* تزریق پنل‌های اضافه به مودال (فقط یک‌بار در هر صفحه) */
+function authExtras(){
+  const fR=document.getElementById("fR");
+  if(!fR||document.getElementById("fO"))return;
+
+  /* لینک «رمز عبور را فراموش کرده‌ام» زیر دکمه‌ی ورود */
+  const fL=document.getElementById("fL");
+  if(fL&&!document.getElementById("authFgLink")){
+    const d=document.createElement("div");d.className="auth-alt";
+    d.innerHTML='<button type="button" id="authFgLink">رمز عبور خود را فراموش کرده‌اید؟</button>';
+    fL.appendChild(d);
+    d.firstChild.addEventListener("click",()=>swA("forgot"));
+  }
+  /* جعبه‌ی هشدار داخل فرم ثبت‌نام (نام تکراری) */
+  if(!document.getElementById("regWarn"))
+    fR.insertAdjacentHTML("afterbegin",authWarnBox("regWarn"));
+
+  const ICO_PHONE='<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18.5h2"/></svg>';
+  const ICO_LOCK ='<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>';
+
+  fR.insertAdjacentHTML("afterend",
+  /* ── فراموشی رمز: گرفتن شماره ── */
+  '<div id="fF" style="display:none">'+
+    '<div class="otp-head"><div class="otp-ico">'+ICO_LOCK+'</div>'+
+      '<div class="otp-ttl">بازیابی رمز عبور</div>'+
+      '<p class="otp-sub">شماره موبایلی که با آن ثبت‌نام کرده‌اید را وارد کنید تا کد تایید برایتان پیامک شود.</p></div>'+
+    '<div style="height:.9rem"></div>'+
+    authWarnBox("fgWarn")+
+    '<div class="fld"><label>شماره موبایل</label><input id="fPh" type="tel" inputmode="numeric" placeholder="09123456789"></div>'+
+    '<button class="btn-bl" id="btnF">ارسال کد تایید</button>'+
+    '<div class="auth-alt"><button type="button" id="fgBack">بازگشت به ورود</button></div>'+
+  '</div>'+
+
+  /* ── مرحله‌ی تایید کد ── */
+  '<div id="fO" style="display:none">'+
+    '<div class="otp-head"><div class="otp-ico">'+ICO_PHONE+'</div>'+
+      '<div class="otp-ttl">کد تایید را وارد کنید</div>'+
+      '<p class="otp-sub">کد ۵ رقمی به شماره <b id="otpPhone"></b> پیامک شد</p></div>'+
+    '<div class="otp-stage" id="otpStage">'+
+      '<input id="otpInput" class="otp-hid" type="text" inputmode="numeric" pattern="[0-9]*" '+
+        'autocomplete="one-time-code" maxlength="5" aria-label="کد تایید">'+
+      '<div class="otp-cells" id="otpCells"></div>'+
+      '<div class="otp-ok"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>'+
+    '</div>'+
+    '<div class="otp-err" id="otpErr"></div>'+
+    '<button class="btn-bl" id="otpBtn" disabled>تایید و ادامه</button>'+
+    '<div class="otp-foot">'+
+      '<button class="otp-link" id="otpResendBtn" disabled>ارسال مجدد کد</button>'+
+      '<span class="otp-timer" id="otpTimer"></span>'+
+      '<button class="otp-link" id="otpBackBtn">تغییر شماره</button>'+
+    '</div>'+
+  '</div>'+
+
+  /* ── تعیین رمز جدید ── */
+  '<div id="fP" style="display:none">'+
+    '<div class="otp-head"><div class="otp-ico">'+ICO_LOCK+'</div>'+
+      '<div class="otp-ttl">رمز عبور جدید</div>'+
+      '<p class="otp-sub">شماره شما تایید شد. حالا یک رمز عبور تازه انتخاب کنید.</p></div>'+
+    '<div style="height:.9rem"></div>'+
+    '<div class="fld"><label>رمز عبور جدید</label><input id="npPs" type="password" placeholder="••••••"></div>'+
+    '<div class="fld"><label>تکرار رمز عبور</label><input id="npPs2" type="password" placeholder="••••••"></div>'+
+    '<button class="btn-bl" id="btnNP">ثبت رمز جدید</button>'+
+  '</div>');
+
+  /* رویدادها */
+  document.getElementById("btnF").addEventListener("click",doForgotSend);
+  document.getElementById("fgBack").addEventListener("click",()=>swA("login"));
+  document.getElementById("btnNP").addEventListener("click",doResetPassword);
+  document.getElementById("otpBtn").addEventListener("click",otpVerify);
+  document.getElementById("otpResendBtn").addEventListener("click",otpResend);
+  document.getElementById("otpBackBtn").addEventListener("click",otpBack);
+  document.getElementById("fPh").addEventListener("keydown",e=>{if(e.key==="Enter")doForgotSend();});
+  document.getElementById("npPs2").addEventListener("keydown",e=>{if(e.key==="Enter")doResetPassword();});
+
+  const inp=document.getElementById("otpInput");
+  inp.addEventListener("input",()=>{otpRender();
+    if(inp.value.replace(/\D/g,"").length===5&&!otpBusy)setTimeout(otpVerify,120);});
+  inp.addEventListener("focus",otpRender);
+  inp.addEventListener("blur",otpRender);
+  inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();otpVerify();}});
+  document.getElementById("otpStage").addEventListener("click",()=>{if(!otpBusy)inp.focus();});
+  otpBuildCells();
+}
+function authWarnBox(id){
+  return '<div class="auth-warn" id="'+id+'">'+
+    '<svg viewBox="0 0 24 24" stroke-linecap="round"><circle cx="12" cy="12" r="9.2"/><path d="M12 7.6v5.2M12 16.3v.1"/></svg>'+
+    '<span></span></div>';
+}
+/* نمایش/پنهان کردن جعبه‌ی هشدار */
+function authWarn(id,msg,withRegister){
+  const b=document.getElementById(id);if(!b)return;
+  if(!msg){b.classList.remove("on");return;}
+  const s=b.querySelector("span");
+  s.textContent=msg;
+  if(withRegister){
+    const btn=document.createElement("button");
+    btn.type="button";btn.className="otp-link";btn.style.marginRight=".4rem";
+    btn.textContent="ساخت حساب جدید";
+    btn.addEventListener("click",()=>swA("register"));
+    s.appendChild(document.createElement("br"));s.appendChild(btn);
+  }
+  b.classList.add("on");
+}
+
+function openAuth(tab){authExtras();document.getElementById("authOvl").classList.add("on");swA(tab||"login");}
+function swA(t){
+  authExtras();
+  const tabs=document.querySelector("#authOvl .atabs");
+  const isTab=(t==="login"||t==="register");
+  if(tabs)tabs.style.display=isTab?"":"none";
+  const atL=document.getElementById("atL"),atR=document.getElementById("atR");
+  if(atL)atL.classList.toggle("on",t==="login");
+  if(atR)atR.classList.toggle("on",t==="register");
+  const show={login:"fL",register:"fR",forgot:"fF",otp:"fO",newpass:"fP"}[t]||"fL";
+  AUTH_PANELS.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=id===show?"":"none";});
+  if(t!=="otp")otpStopTimer();
+  if(t==="forgot"){authWarn("fgWarn","");setTimeout(()=>document.getElementById("fPh")?.focus(),60);}
+  if(t==="register")authWarn("regWarn","");
+  if(t==="newpass")setTimeout(()=>document.getElementById("npPs")?.focus(),60);
+}
 async function doLogin(){const ph=document.getElementById("lPh").value.trim(),ps=document.getElementById("lPs").value;const btn=document.getElementById("btnL");btn.disabled=true;btn.textContent="...";
   try{const d=await api("POST","/auth/login",{phone:ph,password:ps});token=d.token;me=d.user;localStorage.setItem("tb_tk",token);localStorage.setItem("tb_me",JSON.stringify(me));syncAuthCookie();closeOvl("authOvl");renderNav();toast(" خوش آمدید","ok");if(pendBuy){setTimeout(()=>buyProduct(pendBuy),300);pendBuy=null;}}
   catch(e){toast(e.message,"err");}finally{btn.disabled=false;btn.textContent="ورود";}}
-async function doRegister(){const fn=document.getElementById("rFn").value.trim(),ln=document.getElementById("rLn").value.trim(),ph=document.getElementById("rPh").value.trim(),pw=document.getElementById("rPs").value,pw2=document.getElementById("rPs2").value;
+/* پس از ورود/ثبت‌نام موفق — ذخیره‌ی توکن و بستن مودال */
+function authDone(d,msg){
+  token=d.token;me=d.user;
+  localStorage.setItem("tb_tk",token);localStorage.setItem("tb_me",JSON.stringify(me));
+  syncAuthCookie();closeOvl("authOvl");renderNav();toast(msg,"ok");
+  setTimeout(()=>{swA("login");otpReset();},350);
+  if(typeof pendBuy!=="undefined"&&pendBuy){setTimeout(()=>buyProduct(pendBuy),300);pendBuy=null;}
+}
+
+/* ── ثبت‌نام: مرحله‌ی اول → درخواست کد تایید ── */
+async function doRegister(){
+  authExtras();
+  const fn=document.getElementById("rFn").value.trim(),
+        ln=document.getElementById("rLn").value.trim(),
+        ph=document.getElementById("rPh").value.trim(),
+        pw=document.getElementById("rPs").value,
+        pw2=document.getElementById("rPs2").value;
+  authWarn("regWarn","");
   const nv=validateName(fn,ln);if(!nv.ok){toast(nv.msg,"err");return;}
+  if(!/^09[0-9]{9}$/.test(ph)){toast("شماره موبایل معتبر نیست","err");return;}
+  if(pw.length<6){toast("رمز حداقل ۶ کاراکتر","err");return;}
   if(pw!==pw2){toast("رمزها یکسان نیستند","err");return;}
-  const btn=document.getElementById("btnR");btn.disabled=true;btn.textContent="...";
-  try{const d=await api("POST","/auth/register",{phone:ph,password:pw,firstName:fn,lastName:ln});token=d.token;me=d.user;localStorage.setItem("tb_tk",token);localStorage.setItem("tb_me",JSON.stringify(me));syncAuthCookie();closeOvl("authOvl");renderNav();toast(" حساب ساخته شد!","ok");if(pendBuy){setTimeout(()=>buyProduct(pendBuy),300);pendBuy=null;}}
-  catch(e){toast(e.message,"err");}finally{btn.disabled=false;btn.textContent="ساخت حساب";}}
+  const btn=document.getElementById("btnR");btn.disabled=true;btn.textContent="در حال ارسال کد…";
+  try{
+    const d=await api("POST","/auth/otp/send",{purpose:"register",phone:ph,password:pw,firstName:fn,lastName:ln});
+    otpStart({purpose:"register",phone:ph,back:"register",resendIn:d.resendIn||60,devCode:d.devCode});
+  }catch(e){
+    /* نام و نام خانوادگی تکراری → پیام داخل فرم، نه فقط toast */
+    if(e.code==="NAME_TAKEN"){authWarn("regWarn",e.message);toast("نام و نام خانوادگی تکراری است","err");}
+    /* کد همین چند لحظه پیش فرستاده شده — به‌جای خطا، برو به مرحله‌ی کد */
+    else if(e.status===429&&e.retryAfter)otpStart({purpose:"register",phone:ph,back:"register",resendIn:e.retryAfter,resent:true});
+    else toast(e.message,"err");
+  }finally{btn.disabled=false;btn.textContent="ساخت حساب";}
+}
+
+/* ── فراموشی رمز: مرحله‌ی اول → بررسی وجود کاربر و ارسال کد ── */
+async function doForgotSend(){
+  authExtras();
+  const ph=document.getElementById("fPh").value.trim();
+  authWarn("fgWarn","");
+  if(!/^09[0-9]{9}$/.test(ph)){toast("شماره موبایل معتبر نیست","err");return;}
+  const btn=document.getElementById("btnF");btn.disabled=true;btn.textContent="در حال ارسال کد…";
+  try{
+    const d=await api("POST","/auth/otp/send",{purpose:"reset",phone:ph});
+    otpStart({purpose:"reset",phone:ph,back:"forgot",resendIn:d.resendIn||60,devCode:d.devCode});
+  }catch(e){
+    /* شماره‌ای که اصلاً حساب ندارد */
+    if(e.code==="NO_ACCOUNT")authWarn("fgWarn",e.message,true);
+    else if(e.status===429&&e.retryAfter)otpStart({purpose:"reset",phone:ph,back:"forgot",resendIn:e.retryAfter,resent:true});
+    else toast(e.message,"err");
+  }finally{btn.disabled=false;btn.textContent="ارسال کد تایید";}
+}
+
+/* ── فراموشی رمز: مرحله‌ی آخر → ثبت رمز جدید ── */
+async function doResetPassword(){
+  const p1=document.getElementById("npPs").value,p2=document.getElementById("npPs2").value;
+  if(p1.length<6){toast("رمز حداقل ۶ کاراکتر","err");return;}
+  if(p1!==p2){toast("رمزها یکسان نیستند","err");return;}
+  if(!otpCtx||!otpCtx.resetToken){toast("مهلت تمام شد — از ابتدا تلاش کنید","err");swA("forgot");return;}
+  const btn=document.getElementById("btnNP");btn.disabled=true;btn.textContent="…";
+  try{
+    const d=await api("POST","/auth/reset-password",{resetToken:otpCtx.resetToken,password:p1});
+    document.getElementById("npPs").value="";document.getElementById("npPs2").value="";
+    authDone(d,"رمز عبور تغییر کرد — خوش آمدید");
+  }catch(e){toast(e.message,"err");if(e.status===401)swA("forgot");}
+  finally{btn.disabled=false;btn.textContent="ثبت رمز جدید";}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   OTP — منطق مرحله‌ی کد تایید
+   ───────────────────────────────────────────────────────────
+   یک input نامرئی، نه پنج تا: خانه‌ها فقط نمایشی‌اند و از روی
+   input.value رندر می‌شوند. این‌طور backspace، paste، انتخاب متن،
+   کیبورد عددی موبایل و autofill پیامک رایگان کار می‌کنند.
+   ═══════════════════════════════════════════════════════════ */
+let otpCtx=null,otpBusy=false,otpTimerId=null,otpLeft=0;
+const otpWait=ms=>new Promise(r=>setTimeout(r,ms));
+
+function otpBuildCells(){
+  const w=document.getElementById("otpCells");if(!w)return;
+  w.innerHTML="";
+  for(let i=0;i<5;i++){const c=document.createElement("div");c.className="otp-cell";c.dataset.r="";w.appendChild(c);}
+}
+/* رندر تفاضلی — هر خانه در dataset.r نگه می‌دارد الان چه چیزی نشان
+   می‌دهد و فقط وقتی عوض شده بازنویسی می‌شود؛ وگرنه مرورگر عنصر را
+   از نو می‌سازد و انیمیشن ورود روی ارقام قبلی هم دوباره اجرا می‌شود. */
+function otpRender(){
+  const inp=document.getElementById("otpInput");if(!inp)return;
+  const v=inp.value.replace(/\D/g,"").slice(0,5);
+  if(inp.value!==v)inp.value=v;
+  const focused=document.activeElement===inp;
+  document.querySelectorAll("#otpCells .otp-cell").forEach((c,i)=>{
+    const cur=focused&&i===v.length&&!otpBusy;
+    const want=(v[i]||"")+"|"+(cur?"c":"");
+    if(c.dataset.r===want)return;
+    c.dataset.r=want;
+    c.classList.toggle("filled",!!v[i]);
+    c.classList.toggle("cur",cur);
+    c.innerHTML=v[i]?'<span class="otp-dg">'+v[i]+'</span>':(cur?'<span class="otp-crt"></span>':"");
+  });
+  const btn=document.getElementById("otpBtn");
+  if(btn)btn.disabled=otpBusy||v.length<5;
+}
+function otpErr(msg){
+  const e=document.getElementById("otpErr");if(!e)return;
+  e.textContent=msg||"";e.classList.toggle("on",!!msg);
+}
+function otpReset(){
+  const stage=document.getElementById("otpStage");
+  if(stage)stage.classList.remove("spin","merge","done","bad");
+  const inp=document.getElementById("otpInput");if(inp)inp.value="";
+  otpBusy=false;otpErr("");otpBuildCells();otpRender();
+}
+/* شروع مرحله‌ی کد */
+function otpStart(ctx){
+  otpCtx=ctx;otpReset();
+  document.getElementById("otpPhone").textContent=ctx.phone;
+  swA("otp");
+  otpStartTimer(ctx.resendIn||60);
+  setTimeout(()=>{document.getElementById("otpInput").focus();otpRender();},120);
+  /* حالت توسعه (OTP_DEV_MODE=true روی سرور) */
+  if(ctx.devCode){console.log("[OTP dev] کد:",ctx.devCode);toast("کد تست: "+ctx.devCode,"nfo");}
+  else if(ctx.resent)toast("کد قبلی هنوز معتبر است","nfo");
+  else toast("کد تایید پیامک شد","ok");
+}
+function otpBack(){
+  if(otpBusy)return;
+  otpStopTimer();
+  swA(otpCtx&&otpCtx.back==="forgot"?"forgot":"register");
+}
+function otpStartTimer(sec){
+  otpStopTimer();otpLeft=sec;
+  const btn=document.getElementById("otpResendBtn"),t=document.getElementById("otpTimer");
+  const tick=()=>{
+    if(otpLeft<=0){otpStopTimer();if(btn)btn.disabled=false;if(t)t.textContent="";return;}
+    if(btn)btn.disabled=true;
+    if(t)t.textContent="ارسال مجدد تا "+otpLeft+" ثانیه";
+    otpLeft--;
+  };
+  tick();otpTimerId=setInterval(tick,1000);
+}
+function otpStopTimer(){if(otpTimerId){clearInterval(otpTimerId);otpTimerId=null;}}
+
+async function otpResend(){
+  if(!otpCtx||otpBusy)return;
+  const btn=document.getElementById("otpResendBtn");btn.disabled=true;
+  otpErr("");
+  try{
+    const body=otpCtx.purpose==="register"
+      ? {purpose:"register",phone:otpCtx.phone,
+         password:document.getElementById("rPs").value,
+         firstName:document.getElementById("rFn").value.trim(),
+         lastName:document.getElementById("rLn").value.trim()}
+      : {purpose:"reset",phone:otpCtx.phone};
+    const d=await api("POST","/auth/otp/send",body);
+    otpReset();document.getElementById("otpInput").focus();
+    otpStartTimer(d.resendIn||60);
+    if(d.devCode){console.log("[OTP dev] کد:",d.devCode);toast("کد تست: "+d.devCode,"nfo");}
+    else toast("کد جدید ارسال شد","ok");
+  }catch(e){
+    otpErr(e.message);
+    otpStartTimer(e.retryAfter||30);
+  }
+}
+
+/* محاسبه‌ی جابه‌جایی هر خانه: از چیدمان ردیفی به پنج‌ضلعی، و از آنجا به مرکز */
+function otpLayout(){
+  const wrap=document.getElementById("otpCells");if(!wrap)return;
+  const wr=wrap.getBoundingClientRect(),cx=wr.width/2,cy=wr.height/2;
+  const R=Math.max(30,Math.min(38,wr.width*.26));
+  [...wrap.querySelectorAll(".otp-cell")].forEach((c,i)=>{
+    const r=c.getBoundingClientRect();
+    const ox=r.left-wr.left+r.width/2,oy=r.top-wr.top+r.height/2;
+    const a=(-90+i*72)*Math.PI/180;                 /* پنج نقطه با فاصله‌ی ۷۲ درجه */
+    c.style.setProperty("--tx",(cx+R*Math.cos(a)-ox).toFixed(1)+"px");
+    c.style.setProperty("--ty",(cy+R*Math.sin(a)-oy).toFixed(1)+"px");
+    c.style.setProperty("--mx",(cx-ox).toFixed(1)+"px");
+    c.style.setProperty("--my",(cy-oy).toFixed(1)+"px");
+    c.style.setProperty("--dl",(i*55)+"ms");
+  });
+}
+
+/* بررسی کد + انیمیشن
+   ⚠ عدد ۲۱۵۰ باید با مدت otpSpin و تعداد دورها در styles.css هماهنگ بماند */
+async function otpVerify(){
+  if(otpBusy||!otpCtx)return;
+  const inp=document.getElementById("otpInput");
+  const code=inp.value.replace(/\D/g,"");
+  if(code.length<5){otpErr("کد ۵ رقمی را کامل وارد کنید");return;}
+
+  otpBusy=true;otpErr("");
+  const stage=document.getElementById("otpStage"),btn=document.getElementById("otpBtn");
+  btn.disabled=true;btn.textContent="در حال بررسی…";
+  inp.blur();otpRender();
+  otpLayout();
+  stage.classList.remove("bad");stage.classList.add("spin");
+
+  const [res]=await Promise.allSettled([
+    api("POST","/auth/otp/verify",{purpose:otpCtx.purpose,phone:otpCtx.phone,code}),
+    otpWait(2150),
+  ]);
+
+  if(res.status==="rejected"){
+    stage.classList.remove("spin");
+    void stage.offsetWidth;                 /* ری‌فلو تا انیمیشن لرزش دوباره اجرا شود */
+    stage.classList.add("bad");
+    setTimeout(()=>stage.classList.remove("bad"),700);
+    otpErr(res.reason.message);
+    otpBusy=false;btn.disabled=false;btn.textContent="تایید و ادامه";
+    inp.focus();inp.select();otpRender();
+    return;
+  }
+
+  /* ادغام در مرکز → تیک سبز */
+  stage.classList.add("merge");
+  await otpWait(430);
+  stage.classList.add("done");
+  await otpWait(950);
+
+  otpStopTimer();
+  const d=res.value;
+  if(otpCtx.purpose==="reset"){
+    otpCtx.resetToken=d.resetToken;
+    otpBusy=false;btn.textContent="تایید و ادامه";
+    swA("newpass");
+  }else{
+    otpBusy=false;btn.textContent="تایید و ادامه";
+    authDone(d,"حساب شما ساخته شد — خوش آمدید");
+  }
+}
+
 function doLogout(){token=null;me=null;localStorage.removeItem("tb_tk");localStorage.removeItem("tb_me");syncAuthCookie();renderNav();go("home");toast("خروج موفق","nfo");}
 
 /* CART */
