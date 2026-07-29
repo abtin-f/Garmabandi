@@ -78,6 +78,23 @@ function toast(msg,t="nfo"){const el=document.createElement("div");el.className=
 function closeOvl(id){document.getElementById(id).classList.remove("on");}
 document.querySelectorAll(".ovl").forEach(o=>o.addEventListener("click",e=>{if(e.target===o)o.classList.remove("on");}));
 
+/* ─── نماد اعتماد الکترونیکی ───
+   لوگو از سرور اینماد می‌آید و فقط وقتی نمایش داده می‌شود که دامنه‌ی
+   ارجاع‌دهنده همان دامنه‌ی ثبت‌شده باشد؛ روی localhost یا اگر سرور
+   اینماد در دسترس نباشد، تصویر لود نمی‌شود و یک کادر سفید خالی می‌ماند.
+   در آن حالت کل بخش پنهان می‌شود.
+   ⚠ خودِ کد اینماد در HTML دست‌نخورده می‌ماند — این‌جا فقط به رویداد
+   error گوش می‌دهیم تا اعتبارسنجی اینماد خراب نشود. */
+(function(){
+  const wire=()=>document.querySelectorAll(".ft-trust img").forEach(img=>{
+    const hide=()=>{const box=img.closest(".abt-trust")||img.closest(".ft-trust");if(box)box.style.display="none";};
+    if(img.complete&&img.naturalWidth===0)hide();
+    img.addEventListener("error",hide);
+  });
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",wire);
+  else wire();
+})();
+
 /* MOBILE TAB BAR — active state is set by go() */
 /* Dashboard sub-sections still use showDV() */
 function showMobDashBar(v){} /* kept for backward compat — no-op */

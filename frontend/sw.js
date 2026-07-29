@@ -1,16 +1,16 @@
-/* ═══════════════════════════════════════════════════════════
-   Service Worker — گرمابندی ساختمان (PWA)
-   • versioned cache → old caches purged on each release
-   • app shell precached for offline use
-   • navigations: network-first (fresh pages online, cached when offline)
-   • static assets: stale-while-revalidate (fast + auto-updates)
-   • /api/* is NEVER cached (always live)
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   Service Worker â€” Ú¯Ø±Ù…Ø§Ø¨Ù†Ø¯ÛŒ Ø³Ø§Ø®ØªÙ…Ø§Ù† (PWA)
+   â€¢ versioned cache â†’ old caches purged on each release
+   â€¢ app shell precached for offline use
+   â€¢ navigations: network-first (fresh pages online, cached when offline)
+   â€¢ static assets: stale-while-revalidate (fast + auto-updates)
+   â€¢ /api/* is NEVER cached (always live)
    bump VERSION on every deploy so clients pick up new assets.
-═══════════════════════════════════════════════════════════ */
-const VERSION = '2.1.0';
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+const VERSION = '2.2.0';
 const CACHE = 'tb-' + VERSION;
 
-/* app shell — kept resilient: a 404 on any single item won't fail install */
+/* app shell â€” kept resilient: a 404 on any single item won't fail install */
 const SHELL = [
   '/', '/index.html', '/shop.html', '/qr.html', '/about.html', '/contact.html',
   '/dashboard.html', '/detail.html', '/checkout.html', '/terms.html', '/404.html',
@@ -55,7 +55,7 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  /* page navigations → network-first, fall back to cache, then offline shell */
+  /* page navigations â†’ network-first, fall back to cache, then offline shell */
   if (req.mode === 'navigate') {
     e.respondWith(
       fetch(req)
@@ -65,7 +65,7 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  /* static assets → stale-while-revalidate */
+  /* static assets â†’ stale-while-revalidate */
   e.respondWith(
     caches.match(req).then((cached) => {
       const net = fetch(req).then((r) => {

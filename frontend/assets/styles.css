@@ -814,6 +814,32 @@ a{text-decoration:none;color:inherit}
 .ft-version{font-size:11px;color:var(--faint);opacity:.85;margin-top:3px}
 /* designer credit — centered on its own line, separated from the rest */
 .ft-designer{text-align:center;font-size:11.5px;font-weight:600;color:var(--faint);letter-spacing:.05em;margin-top:1.6rem;padding-top:1.2rem;border-top:1px solid var(--rim)}
+
+/* ═══ نماد اعتماد الکترونیکی (اینماد) ═══
+   لوگوی اینماد روی پس‌زمینه‌ی روشن طراحی شده و در تم تیره خوانا نیست،
+   پس همیشه داخل یک کادر سفید می‌نشیند.
+   ⚠ در HTML به کد اینماد دست نزن: referrerpolicy، آدرس src/href و
+   اتریبیوت code را اینماد موقع اعتبارسنجی چک می‌کند. */
+.ft-trust{display:flex;justify-content:center;align-items:center;gap:.9rem;flex-wrap:wrap;margin:0 0 1.5rem}
+.ft-trust a{display:inline-flex;align-items:center;justify-content:center;
+  background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:7px;line-height:0;
+  transition:transform .22s var(--ease-out),box-shadow .22s}
+.ft-trust a:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,.22)}
+.ft-trust img{display:block;height:88px;width:auto;border-radius:7px}
+
+/* نسخه‌ی بزرگ‌تر داخل صفحه‌ی «درباره ما» */
+.abt-trust{display:flex;flex-direction:column;align-items:center;gap:1rem;text-align:center;
+  background:var(--card);border:1.5px solid var(--card-bdr);border-radius:18px;
+  padding:2.2rem 1.5rem;margin-bottom:4rem;box-shadow:var(--shadow)}
+.abt-trust h3{font-size:1.15rem;font-weight:800}
+.abt-trust p{font-size:13px;color:var(--muted);line-height:1.95;max-width:520px}
+.abt-trust .ft-trust{margin:0}
+.abt-trust .ft-trust img{height:118px}
+@media(max-width:560px){
+  .ft-trust img{height:76px}
+  .abt-trust{padding:1.6rem 1rem}
+  .abt-trust .ft-trust img{height:96px}
+}
 .ft-socials{display:flex;gap:8px;align-items:center}
 .ft-social{width:34px;height:34px;border-radius:9px;background:var(--bg3);border:1px solid var(--rim2);display:grid;place-items:center;color:var(--muted);transition:all .22s;cursor:pointer}
 .ft-social:hover{background:rgba(212,146,10,.1);border-color:rgba(212,146,10,.25);color:var(--gold)}
