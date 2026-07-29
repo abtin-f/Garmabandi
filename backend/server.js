@@ -226,6 +226,10 @@ const OTP_DEV_MODE = String(process.env.OTP_DEV_MODE || '').toLowerCase() === 't
 const SMS_API_KEY     = (process.env.SMS_API_KEY || '').trim();
 const SMS_TEMPLATE_ID = parseInt(process.env.SMS_TEMPLATE_ID || '0', 10);
 const SMS_PARAM_NAME  = (process.env.SMS_PARAM_NAME || 'CODE').trim();
+const SMS_LINE_NUMBER = (process.env.SMS_LINE_NUMBER || '').trim();
+/* 'verify' = ارسال سریع با قالب (خط خدماتی مشترک sms.ir)
+   'line'   = ارسال از خط اختصاصی — فقط بعد از خدماتی‌سازی خط */
+const SMS_SEND_MODE   = (process.env.SMS_SEND_MODE || 'verify').trim().toLowerCase();
 
 const otpStore    = new Map();   /* 'purpose:phone' → {code, exp, tries, sentAt, payload} */
 const otpHourly   = new Map();   /* phone → [timestamp, ...] */
@@ -266,28 +270,52 @@ setInterval(() => {
 }, 60_000).unref?.();
 
 /* ─── ارسال واقعی پیامک از طریق sms.ir ───
-   مستندات: POST https://api.sms.ir/v1/send/verify
-   هدر x-api-key + بدنه‌ی {mobile, templateId, parameters:[{name,value}]} */
+
+   دو مسیر ممکن است، با SMS_SEND_MODE در .env انتخاب می‌شود:
+
+   'verify' (پیش‌فرض) → POST /v1/send/verify
+       «ارسال سریع» با قالب. خودِ sms.ir خط را انتخاب می‌کند و همیشه
+       یکی از خطوط خدماتی مشترکش (۵۰۰۰…) را می‌گذارد؛ پارامتری برای
+       انتخاب خط ندارد.
+
+   'line' → POST /v1/send/bulk با lineNumber
+       از خط اختصاصی خودمان می‌فرستد.
+
+   ⚠ چرا پیش‌فرض 'verify' است: خط اختصاصی ۳۰۰۰۲۱۰۸۰۲۹۰۲۵ فعلاً
+   «تبلیغاتی» است. با همین شماره تست شد و نتیجه در پنل «ناموفق» ثبت
+   شد، در حالی‌که دقیقاً همان متن به همان گیرنده از خط اشتراکی در
+   ۱ دقیقه و ۳۲ ثانیه تحویل شد. خط تبلیغاتی برای هر کسی که
+   «مسدودسازی پیامک تبلیغاتی» مخابرات را فعال کرده اصلاً نمی‌رسد.
+   بعد از «خدماتی‌سازی» خط، فقط کافی است SMS_SEND_MODE=line شود؛
+   هیچ تغییر کدی لازم نیست. */
 async function sendOtpSms(phone, code) {
-  if (!SMS_API_KEY || !SMS_TEMPLATE_ID) {
+  const useLine = SMS_SEND_MODE === 'line' && SMS_LINE_NUMBER;
+  if (!SMS_API_KEY || (!useLine && !SMS_TEMPLATE_ID)) {
     console.log(`📵 [OTP] پنل پیامک تنظیم نشده — کد ${phone}: ${code}`);
     return { sent: false, reason: 'not-configured' };
   }
+
+  const url = useLine
+    ? 'https://api.sms.ir/v1/send/bulk'
+    : 'https://api.sms.ir/v1/send/verify';
+  const body = useLine
+    ? { lineNumber: Number(SMS_LINE_NUMBER),
+        messageText: `کد تایید شما: ${code}\nگرمابندی\ngarmabandi.ir`,
+        mobiles: [phone] }
+    : { mobile: phone, templateId: SMS_TEMPLATE_ID,
+        parameters: [{ name: SMS_PARAM_NAME, value: String(code) }] };
+
   const ctrl = AbortSignal.timeout ? AbortSignal.timeout(12000) : undefined;
   let r, d;
   try {
-    r = await fetch('https://api.sms.ir/v1/send/verify', {
+    r = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         'x-api-key': SMS_API_KEY,
       },
-      body: JSON.stringify({
-        mobile: phone,
-        templateId: SMS_TEMPLATE_ID,
-        parameters: [{ name: SMS_PARAM_NAME, value: String(code) }],
-      }),
+      body: JSON.stringify(body),
       signal: ctrl,
     });
     d = await r.json().catch(() => ({}));
@@ -299,7 +327,8 @@ async function sendOtpSms(phone, code) {
     console.error('❌ sms.ir:', r.status, JSON.stringify(d));
     throw new Error(d.message || 'ارسال پیامک ناموفق بود');
   }
-  return { sent: true, messageId: d.data?.messageId };
+  /* verify یک messageId می‌دهد، bulk آرایه‌ی messageIds */
+  return { sent: true, messageId: d.data?.messageId ?? d.data?.messageIds?.[0] };
 }
 
 /* ─── ساخت و ارسال کد (مشترک بین ثبت‌نام و فراموشی رمز) ─── */

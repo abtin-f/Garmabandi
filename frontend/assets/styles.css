@@ -796,7 +796,9 @@ a{text-decoration:none;color:inherit}
 
 .site-footer{background:var(--bg2);border-top:1px solid var(--rim2);padding:0}
 .ft-inner{max-width:1060px;margin:0 auto;padding:3.5rem 1.5rem 2rem}
-.ft-top{display:grid;grid-template-columns:320px 1fr;gap:4rem;margin-bottom:3rem}
+/* سه ستون: برند | لینک‌ها | نماد اینماد و شبکه‌های اجتماعی */
+.ft-top{display:grid;grid-template-columns:290px 1fr auto;gap:2.5rem;margin-bottom:3rem}
+.ft-trust-col{display:flex;flex-direction:column;align-items:center;gap:1rem}
 .ft-brand{display:flex;flex-direction:column;gap:1.2rem}
 .ft-logo{display:flex;align-items:center;gap:11px}
 .ft-brand-name{font-size:15px;font-weight:900;letter-spacing:-.01em}
@@ -808,7 +810,8 @@ a{text-decoration:none;color:inherit}
 .ft-links span{font-size:13px;color:var(--muted);cursor:pointer;transition:color .2s;width:fit-content}
 .ft-links span:hover{color:var(--gold)}
 .ft-divider{height:1px;background:var(--rim);margin-bottom:1.8rem}
-.ft-bottom{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
+/* آیکون‌ها به ft-trust-col منتقل شدند، پس این‌جا فقط کپی‌رایت مانده */
+.ft-bottom{display:flex;align-items:center;justify-content:center;text-align:center;flex-wrap:wrap;gap:1rem}
 .ft-copy{font-size:12px;color:var(--faint);line-height:1.9}
 .ft-meta{font-size:11px;color:var(--faint);opacity:.8;margin-top:2px}
 .ft-version{font-size:11px;color:var(--faint);opacity:.85;margin-top:3px}
@@ -820,7 +823,7 @@ a{text-decoration:none;color:inherit}
    پس همیشه داخل یک کادر سفید می‌نشیند.
    ⚠ در HTML به کد اینماد دست نزن: referrerpolicy، آدرس src/href و
    اتریبیوت code را اینماد موقع اعتبارسنجی چک می‌کند. */
-.ft-trust{display:flex;justify-content:center;align-items:center;gap:.9rem;flex-wrap:wrap;margin:0 0 1.5rem}
+.ft-trust{display:flex;justify-content:center;align-items:center;gap:.9rem;flex-wrap:wrap;margin:0}
 .ft-trust a{display:inline-flex;align-items:center;justify-content:center;
   background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:7px;line-height:0;
   transition:transform .22s var(--ease-out),box-shadow .22s}
@@ -1137,10 +1140,12 @@ button .ic,a .ic,.cta-a .ic,.cta-b .ic,.nb .ic{vertical-align:-.18em}
   .ft-links{gap:.5rem}
   .ft-links span{font-size:11.5px}
   .ft-inner{padding:2.25rem 1rem 1.25rem}
-  /* Bottom row: copyright + socials centered & stacked neatly */
+  /* نماد و آیکون‌ها روی موبایل زیر لینک‌ها و وسط‌چین می‌مانند */
+  .ft-trust-col{gap:.85rem;margin-top:.5rem}
+  .ft-trust img{height:82px}
+  /* فقط کپی‌رایت مانده */
   .ft-bottom{flex-direction:column;gap:.85rem;text-align:center}
-  .ft-copy{font-size:11px;order:2}
-  .ft-socials{order:1}
+  .ft-copy{font-size:11px}
 
   /* ── Dashboard ── */
   .dash-wrap{grid-template-columns:1fr;padding:.85rem;gap:.75rem;min-height:auto}

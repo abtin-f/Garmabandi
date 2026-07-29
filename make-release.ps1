@@ -4,6 +4,14 @@
 #  خروجی: garmabandi-v<version>.zip کنار پوشه‌ی پروژه
 #  آنچه داخل zip نمی‌رود: node_modules، .git، .env، uploads، لاگ‌ها
 #
+#  ⚠ ساختار داخل zip حتماً باید یک پوشه‌ی ریشه به نام thermal-book-final
+#  داشته باشد و بقیه‌ی فایل‌ها داخل آن باشند:
+#      thermal-book-final/frontend/...
+#      thermal-book-final/backend/...
+#  چون روی هاست، zip در /home/deeppeed اکسترکت می‌شود و باید دقیقاً
+#  روی پوشه‌ی موجود thermal-book-final بنشیند. اگر فایل‌ها در ریشه‌ی
+#  zip باشند، اکسترکت آن‌ها را وسط home می‌ریزد.
+#
 #  ⚠ مسیرها با «/» نوشته می‌شوند نه «\» — Compress-Archive در
 #  ویندوز از بک‌اسلش استفاده می‌کند و بعضی اکسترکت‌کننده‌های لینوکسی
 #  (از جمله File Manager بعضی نسخه‌های cPanel) به‌جای ساخت پوشه،
@@ -21,23 +29,24 @@ $out  = Join-Path (Split-Path -Parent $root) "garmabandi-v$ver.zip"
 if (Test-Path $out) { Remove-Item $out -Force }
 
 # ─── فهرست فایل‌هایی که باید داخل zip بروند ───
+$base  = 'thermal-book-final'   # پوشه‌ی ریشه‌ی داخل zip
 $items = @()   # هر آیتم: @{ Src = مسیر واقعی; Dst = مسیر داخل zip }
 
 # فرانت‌اند: کل پوشه
 Get-ChildItem "$root\frontend" -Recurse -File | ForEach-Object {
   $rel = $_.FullName.Substring("$root\".Length).Replace('\','/')
-  $items += @{ Src = $_.FullName; Dst = $rel }
+  $items += @{ Src = $_.FullName; Dst = "$base/$rel" }
 }
 # بک‌اند: فقط فایل‌های لازم (بدون node_modules، .env، uploads، لاگ)
 foreach ($f in @('server.js','db-mysql.js','package.json','package-lock.json','schema.sql','.env.example')) {
-  if (Test-Path "$root\backend\$f") { $items += @{ Src = "$root\backend\$f"; Dst = "backend/$f" } }
+  if (Test-Path "$root\backend\$f") { $items += @{ Src = "$root\backend\$f"; Dst = "$base/backend/$f" } }
 }
 # مستندات — فقط اسم‌های انگلیسی.
 # نام فارسی داخل zip روی سرور لینوکسی به‌هم‌ریخته می‌شود و
 # راهنماها در مخزن گیت موجودند، پس داخل بسته لازم نیستند.
 Get-ChildItem $root -File -Filter *.md |
   Where-Object { $_.Name -match '^[\x20-\x7E]+$' } |
-  ForEach-Object { $items += @{ Src = $_.FullName; Dst = $_.Name } }
+  ForEach-Object { $items += @{ Src = $_.FullName; Dst = "$base/$($_.Name)" } }
 
 $zip = [IO.Compression.ZipFile]::Open($out, [IO.Compression.ZipArchiveMode]::Create)
 try {
