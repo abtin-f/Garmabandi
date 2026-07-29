@@ -14,7 +14,7 @@ const BGL={book:"linear-gradient(148deg,#dde3ed,#ccd4e0)",chapter:"linear-gradie
 let token=localStorage.getItem("tb_tk")||null;
 let me=JSON.parse(localStorage.getItem("tb_me")||"null");
 let allProds=[];
-let curV="g",isMode="g",sfType="all",curPage=1,filteredProds=[];
+let isMode="g",sfType="all",curPage=1,filteredProds=[];
 let pendBuy=null,selRating=0;
 let cart=JSON.parse(localStorage.getItem("tb_cart")||"[]");
 let camStream=null,camInterval=null,isTimer=null;
@@ -789,27 +789,14 @@ function imgHTML(p,h=152){
   return`<div class="pc-img-ph" data-ptype="${p.type||'article'}" style="${hStyle}"><span class="pc-img-ph-ico">${ic(TI[p.type]||"file-text",16)}</span><div class="pc-img-wm"><span>THERMAL ENG • PROTECTED •</span></div><div class="pc-lock">${ic('lock',16)}</div></div>`;
 }
 
-function prodCard(p,lv=false){
+/* یک شکل کارت بیشتر وجود ندارد — نمای لیستی حذف شده است. */
+function prodCard(p){
   const disc=p.discount?Math.round(p.price*(1-p.discount/100)):p.price;
   const rt=p.rating?`<div class="pc-rt">${mkSt(p.rating,true)}<span>(${p.reviewCount||0})</span></div>`:"";
   const inC=isInCart(p.id);
-  const img=imgHTML(p,lv?0:152);
+  const img=imgHTML(p,152);
   const pid=p.id;
   /* Fix 2: use data-pid attribute to avoid closure issues; stopPropagation not enough — use separate flag */
-  if(lv)return`<div class="pc lv" data-pid="${pid}" onclick="openDetail('${pid}')">
-    ${img}
-    <div class="pc-body">
-      <span class="pc-bdg ${TC[p.type]||"art-b"}">${ic(TI[p.type]||"file-text",16)} ${TL[p.type]||p.type}</span>
-      <div class="pc-nm">${p.title}</div>
-      <div class="pc-rt pc-rt-lv">${rt}</div>
-      <div class="pc-ft">
-        <span class="pc-pr">${disc.toLocaleString()} ت</span>
-        <div class="pc-btn-grp">
-          <button class="buy-b" onclick="(function(e){e.stopPropagation();e.preventDefault();buyProduct('${pid}');})(event)">خرید</button>
-          <button class="cart-add-b ${inC?"in-cart":""}" id="cadd-${pid}" onclick="(function(e){e.stopPropagation();e.preventDefault();addToCartBtn('${pid}',this);})(event)">${inC?"":""}</button>
-        </div>
-      </div>
-    </div></div>`;
   return`<div class="pc" data-pid="${pid}" onclick="openDetail('${pid}')">
     ${img}
     <div class="pc-body">
@@ -831,7 +818,9 @@ function renderFeatured(){const el=document.getElementById("homeFeatured");if(el
 /* SHOP + PAGINATION */
 let sfQ="";
 function setSFType(btn,t){document.querySelectorAll("#sfBtns .sf-b").forEach(b=>b.classList.remove("on"));btn.classList.add("on");sfType=t;curPage=1;renderShop();}
-function setV(v){curV=v;document.getElementById("vtG").classList.toggle("on",v==="g");document.getElementById("vtL").classList.toggle("on",v==="l");renderShop();}
+/* setV() حذف شد — فروشگاه فقط نمای شبکه‌ای دارد.
+   اگر جایی از کد قدیمی هنوز صدایش بزند، خطا ندهد: */
+function setV(){}
 function getFiltered(){
   const sort=(document.getElementById("sfSort")||{}).value||"default";
   let p=[...allProds];
@@ -850,8 +839,8 @@ function renderShop(){
   const page=filteredProds.slice(start,start+PER_PAGE);
   const st=document.getElementById("shopStats");if(st)st.textContent=`${total} محصول • صفحه ${curPage}/${totalPg}`;
   const grid=document.getElementById("prodGrid");if(!grid)return;
-  grid.className="pg-grid"+(curV==="l"?" lv":"");
-  grid.innerHTML=page.length?page.map(x=>prodCard(x,curV==="l")).join(""):`<div class="empty" style="grid-column:1/-1"><div class="empty-i">${ic('search',16)}</div><p>محصولی یافت نشد</p></div>`;
+  grid.className="pg-grid";
+  grid.innerHTML=page.length?page.map(x=>prodCard(x)).join(""):`<div class="empty" style="grid-column:1/-1"><div class="empty-i">${ic('search',16)}</div><p>محصولی یافت نشد</p></div>`;
   renderPgn(totalPg);
 }
 function renderPgn(tp){

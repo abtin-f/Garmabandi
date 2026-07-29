@@ -40,5 +40,36 @@ require.cache[p] = { id: p, filename: p, loaded: true, exports: { db, init: asyn
 process.env.OTP_DEV_MODE = 'true';
 if (!process.argv.includes('--real-sms')) process.env.SMS_API_KEY = '';
 
+/* ─── داده‌ی نمونه برای تست پنل ادمین ───
+   ورود ادمین:  09120000000 / admin123                          */
+const bcrypt = require('bcryptjs');
+const TYPES = ['book', 'chapter', 'image', 'article'];
+cache.users.push({
+  id: 'u-admin', phone: '09120000000', password: bcrypt.hashSync('admin123', 10),
+  firstName: 'مدیر', lastName: 'سایت', isAdmin: true, phoneVerified: true,
+  banned: false, termsAccepted: true, purchases: ['p1', 'p2'],
+  createdAt: new Date(2026, 0, 1).toISOString(),
+});
+for (let i = 1; i <= 13; i++) {
+  cache.users.push({
+    id: 'u' + i, phone: '0912000' + String(1000 + i), password: 'x',
+    firstName: 'کاربر', lastName: 'شماره ' + i, isAdmin: false,
+    phoneVerified: i % 3 !== 0, banned: i === 5, termsAccepted: i % 2 === 0,
+    purchases: i % 4 === 0 ? ['p1'] : [],
+    createdAt: new Date(2026, 4, i).toISOString(),
+  });
+}
+for (let i = 1; i <= 11; i++) {
+  cache.products.push({
+    id: 'p' + i, type: TYPES[i % 4], featured: i % 5 === 0,
+    title: 'محصول نمونه شماره ' + i + ' با یک عنوان نسبتاً بلند',
+    description: 'توضیح کوتاه محصول نمونه', price: 45000 + i * 1000,
+    discount: i % 3 === 0 ? 20 : 0, rating: 4 + (i % 10) / 10, reviewCount: i,
+    tags: [], chapters: [], bundleItems: [], image: '',
+    createdAt: new Date(2026, 3, i).toISOString(),
+  });
+}
+
 console.log('⚠  حالت تست — دیتابیس در حافظه (با ری‌استارت پاک می‌شود)');
+console.log('   ورود ادمین:  09120000000 / admin123');
 require('./server.js');

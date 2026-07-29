@@ -219,6 +219,19 @@ button,input,select,textarea{font-family:var(--f)}
 .mf.on{background:rgba(212,146,10,.1);border-color:rgba(212,146,10,.28);color:var(--goldL)}
 .mf-stats{font-size:11px;color:var(--faint);margin-right:auto;padding-right:.5rem}
 
+/* ─── خلاصه‌ی کاربران بالای فهرست ─── */
+.usr-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:.7rem;margin-bottom:1.2rem}
+.us-card{background:var(--bg3);border:1px solid var(--rim2);border-radius:13px;padding:.85rem 1rem;display:flex;align-items:center;gap:.7rem}
+.us-ico{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;flex-shrink:0}
+.us-n{font-size:1.35rem;font-weight:900;line-height:1.1}
+.us-l{font-size:10.5px;color:var(--faint);font-weight:600;margin-top:1px}
+.us-total .us-ico{background:rgba(212,146,10,.12);color:var(--gold)}
+.us-verified .us-ico{background:rgba(19,184,122,.12);color:var(--green)}
+.us-buyers .us-ico{background:rgba(53,120,214,.12);color:var(--blue)}
+.us-banned .us-ico{background:rgba(214,53,53,.12);color:var(--red)}
+@media(max-width:900px){.usr-sum{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:420px){.usr-sum{grid-template-columns:1fr 1fr;gap:.5rem}.us-card{padding:.7rem .75rem;gap:.5rem}.us-n{font-size:1.15rem}}
+
 /* PRODUCT ROWS (COMPLETELY DIFFERENT FROM SHOP CARDS) */
 .prod-tbl{background:var(--bg3);border:1px solid var(--rim2);border-radius:16px;overflow:hidden}
 .prod-tbl-hd{display:grid;grid-template-columns:56px 1fr 100px 90px 80px 90px 160px;gap:.8rem;align-items:center;padding:.8rem 1.2rem;border-bottom:1.5px solid var(--rim2);background:var(--bg4)}
@@ -343,11 +356,17 @@ button,input,select,textarea{font-family:var(--f)}
 .empty-i{font-size:2.5rem;margin-bottom:.75rem;opacity:.4}
 
 /* RESP */
-@media(max-width:1100px){.prod-tbl-hd,.prod-row{grid-template-columns:56px 1fr 100px 90px 90px 160px}.prod-tbl-hd span:nth-child(5),.prod-row>:nth-child(5){display:none}}
+/* ستون‌ها فقط تا وقتی جدول واقعاً جدول است حذف می‌شوند (بالای ۶۴۰px).
+   زیر ۶۴۰px چیدمان کارتی می‌شود و همه‌ی ستون‌ها باید برگردند، پس این
+   قاعده‌ها با min-width محدود شده‌اند تا لازم نباشد بعداً با important
+   خنثی شوند. */
+@media(min-width:641px) and (max-width:1100px){.prod-tbl-hd,.prod-row{grid-template-columns:56px 1fr 100px 90px 90px 160px}.prod-tbl-hd span:nth-child(5),.prod-row>:nth-child(5){display:none}}
 @media(max-width:900px){
   .kpi-strip{grid-template-columns:repeat(3,1fr)}.dash-2col{grid-template-columns:1fr}
   .adm-brand small{display:none}.adm-brand b{font-size:12px}
   .mgmt-bar{flex-wrap:wrap}.mgmt-search{min-width:200px}
+}
+@media(min-width:641px) and (max-width:900px){
   .prod-tbl-hd,.prod-row{grid-template-columns:44px 1fr 90px 80px 140px}
   .prod-tbl-hd span:nth-child(4),.prod-row>:nth-child(4){display:none}
 }
@@ -365,14 +384,46 @@ button,input,select,textarea{font-family:var(--f)}
   .cf-g{grid-template-columns:1fr}
   .ug-stats{gap:.6rem}.ug-stat b{font-size:13px}
   .ord-card{flex-wrap:wrap}.ord-right{width:100%;flex-direction:row;justify-content:space-between;padding-top:.4rem;border-top:1px solid var(--rim)}
-  .mgmt-filters{display:none}
+  /* فیلترها به‌جای پنهان شدن، افقی اسکرول می‌شوند تا روی موبایل هم در دسترس باشند */
+  .mgmt-filters{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;width:100%;padding-bottom:2px}
+  .mgmt-filters::-webkit-scrollbar{display:none}
+  .mf{flex-shrink:0}
+  .mf-stats{margin-right:0}
+}
+
+/* ═══ مدیریت محصولات روی موبایل و تبلت کوچک ═══
+   قبلاً زیر ۴۸۰px کل جدول display:none می‌شد و قرار بود
+   .prod-cards-mobile جایش را بگیرد — ولی چنین المانی هیچ‌وقت ساخته
+   نشده بود، برای همین صفحه‌ی مدیریت محصولات روی گوشی کاملاً خالی
+   می‌ماند و دکمه‌های ویرایش/تخفیف/حذف در دسترس نبودند.
+   حالا همان ردیف‌ها با CSS به کارت تبدیل می‌شوند؛ نه المان تکراری
+   لازم است نه رندر دوم. */
+@media(max-width:640px){
+  .prod-tbl-hd{display:none}
+  .prod-tbl{border-radius:14px}
+  .prod-row{
+    display:flex;flex-wrap:wrap;align-items:center;
+    gap:.45rem .6rem;padding:.9rem 1rem;
+  }
+  .prod-row>:nth-child(1){flex:0 0 auto}                  /* تصویر */
+  /* نام تمام عرضِ باقی‌مانده را می‌گیرد تا نوع/قیمت/تخفیف/وضعیت
+     همگی با هم به سطر بعد بروند، نه اینکه یکی‌شان تنها بیفتد پایین */
+  .prod-row>:nth-child(2){flex:1 1 calc(100% - 60px);min-width:0}
+  .prod-row>:nth-child(3){order:3}                        /* نوع */
+  .prod-row>:nth-child(4){order:4;display:block}          /* قیمت */
+  .prod-row>:nth-child(5){order:5;display:block}          /* تخفیف */
+  .prod-row>:nth-child(6){order:6}                        /* وضعیت */
+  .prod-row .prod-info .nm{white-space:normal}
+  .prod-acts{
+    order:9;flex:1 0 100%;margin-top:.35rem;
+    display:grid;grid-template-columns:repeat(3,1fr);gap:6px;
+  }
+  .prod-acts button{padding:9px 6px;font-size:12px}
 }
 @media(max-width:480px){
   .kpi-strip{grid-template-columns:1fr 1fr;gap:.65rem}
   .kpi-n{font-size:1.3rem}
   .adm-pg-hd h1{font-size:1.1rem}
-  .prod-tbl{display:none}
-  .prod-cards-mobile{display:flex!important;flex-direction:column;gap:.65rem}
 }
 
 .ic{display:inline-block;vertical-align:-.16em;flex-shrink:0;line-height:0}
@@ -974,7 +1025,9 @@ button,input,select,textarea{font-family:var(--f)}
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           <input id="usrSrch" placeholder="جستجو با شماره یا نام..." oninput="renderUsers()">
         </div>
+        <span class="mf-stats" id="usrCnt"></span>
       </div>
+      <div class="usr-sum" id="usrSum"></div>
       <div id="userList"></div>
     </div>
   </div>
@@ -1196,7 +1249,10 @@ let prodFilter="all",ordFilter="all",discTgt=null;
 let imgFileObj=null,imgPreviewUrl="";
 let digFileObj=null,digFileName="",digFileSizeMB=0;
 
-const TI={book:"",chapter:"",image:"",article:""};
+/* نام آیکون هر نوع محصول — مقدارها قبلاً رشته‌ی خالی بودند (ایموجی‌ها
+   حذف شده بودند) و چون falsy بودند، شاخه‌ی fallback اجرا می‌شد. */
+const TI={book:"book",chapter:"layers",image:"image",article:"file-text",bundle:"package"};
+const tIcoA=(t,sz)=>ic(TI[t]||"file-text",sz||16);
 const TL={book:"کتاب",chapter:"فصل",image:"تصویر فنی",article:"مقاله"};
 const TC={book:"tt-book",chapter:"tt-chapter",image:"tt-image",article:"tt-article"};
 
@@ -1534,8 +1590,11 @@ function renderProdTable(){
   document.getElementById("prodTblBody").innerHTML=p.length?p.map(prod=>{
     const disc=prod.discount?Math.round(prod.price*(1-prod.discount/100)):prod.price;
     const thumb=prod.image&&prod.image.length>10
-      ?`<div class="prod-thumb"><img src="${prod.image}" alt="" draggable="false"><div class="prod-thumb-ico">${TI[prod.type]||"${ic('file-text',16)}"}</div></div>`
-      :`<div class="prod-thumb"><div class="prod-thumb-ico" style="position:static;font-size:1.2rem">${TI[prod.type]||"${ic('file-text',16)}"}</div></div>`;
+      /* ⚠ قبلاً fallback به‌صورت "${ic('file-text',16)}" داخل یک رشته‌ی
+         معمولی نوشته شده بود، نه template literal — برای همین به‌جای
+         آیکون، همان متن خام در ستون تصویر چاپ می‌شد. */
+      ?`<div class="prod-thumb"><img src="${prod.image}" alt="" draggable="false"><div class="prod-thumb-ico">${tIcoA(prod.type,17)}</div></div>`
+      :`<div class="prod-thumb"><div class="prod-thumb-ico" style="position:static">${tIcoA(prod.type,19)}</div></div>`;
     return`<div class="prod-row">
       ${thumb}
       <div class="prod-info"><div class="nm">${prod.title}</div><div class="id">${prod.id}</div></div>
@@ -1568,6 +1627,22 @@ function renderUsers(){
   const q=(document.getElementById("usrSrch")||{}).value||"";
   let users=[...allUsers];
   if(q)users=users.filter(u=>u.phone.includes(q)||(u.firstName||"").includes(q)||(u.lastName||"").includes(q));
+
+  /* ─── خلاصه‌ی کاربران ───
+     همیشه روی کل کاربران حساب می‌شود، نه نتیجه‌ی جستجو، وگرنه با تایپ
+     در کادر جستجو «کل کاربران» هم عوض می‌شود و گمراه‌کننده است. */
+  const totalU  = allUsers.length;
+  const verifU  = allUsers.filter(u=>u.phoneVerified).length;
+  const buyersU = allUsers.filter(u=>(u.purchaseCount||0)>0).length;
+  const bannedU = allUsers.filter(u=>u.banned).length;
+  const sum=document.getElementById("usrSum");
+  if(sum)sum.innerHTML=
+    `<div class="us-card us-total"><div class="us-ico">${ic('users',17)}</div><div><div class="us-n">${totalU.toLocaleString()}</div><div class="us-l">کل کاربران سایت</div></div></div>`+
+    `<div class="us-card us-verified"><div class="us-ico">${ic('check-circle',17)}</div><div><div class="us-n">${verifU.toLocaleString()}</div><div class="us-l">شماره تاییدشده</div></div></div>`+
+    `<div class="us-card us-buyers"><div class="us-ico">${ic('receipt',17)}</div><div><div class="us-n">${buyersU.toLocaleString()}</div><div class="us-l">کاربر خریدار</div></div></div>`+
+    `<div class="us-card us-banned"><div class="us-ico">${ic('alert',17)}</div><div><div class="us-n">${bannedU.toLocaleString()}</div><div class="us-l">مسدود</div></div></div>`;
+  const cnt=document.getElementById("usrCnt");
+  if(cnt)cnt.textContent=q?`${users.length} از ${totalU} کاربر`:`${totalU} کاربر`;
   const groups=users.map(u=>{
     const ords=allOrders.filter(o=>o.userPhone===u.phone);
     const total=ords.filter(o=>o.status==="paid").reduce((s,o)=>s+(o.amount||0),0);
@@ -1596,7 +1671,7 @@ function renderUsers(){
       </div>
       <div class="ug-body">
         ${g.ords.length?g.ords.map(o=>`<div class="ug-ord">
-          <span>${TI[o.productType]||""}</span>
+          <span>${tIcoA(o.productType,14)}</span>
           <span class="ug-ord-nm">${o.productTitle||"—"}</span>
           <span class="ug-stag ${o.status==="paid"?"ugs-ok":o.status==="failed"?"ugs-fail":"ugs-pend"}">${o.status==="paid"?" پرداخت":o.status==="failed"?" ناموفق":"⏳ معلق"}</span>
           <span class="ug-ord-amt">${(o.amount||0).toLocaleString()} ت</span>

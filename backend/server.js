@@ -202,7 +202,11 @@ function fullNameTaken(firstName, lastName, exceptId) {
 const crypto = require('crypto');
 
 const OTP_LEN          = 5;                 /* طول کد */
-const OTP_TTL_MS       = 2 * 60 * 1000;     /* اعتبار کد: ۲ دقیقه */
+/* اعتبار کد: ۵ دقیقه.
+   ۲ دقیقه بود و کم آمد — تحویل پیامک در ایران همیشه چند ثانیه‌ای نیست و
+   وقتی ارسال در صف اپراتور یا پنل می‌ماند، کد پیش از رسیدن به گوشی منقضی
+   می‌شود. سقف ۵ تلاش اشتباه جلوی حدس زدن را می‌گیرد، نه کوتاهیِ این عدد. */
+const OTP_TTL_MS       = 5 * 60 * 1000;
 const OTP_RESEND_MS    = 60 * 1000;         /* فاصله‌ی ارسال مجدد: ۶۰ ثانیه */
 const OTP_MAX_ATTEMPTS = 5;                 /* تلاش اشتباه مجاز */
 const OTP_MAX_PER_HOUR = 6;                 /* سقف درخواست کد برای هر شماره در ساعت */
@@ -934,7 +938,7 @@ app.get('/api/admin/users', adminAuth, async (req, res) => {
   const { q } = req.query;
   let users = db.get('users').value();
   if (q) users = users.filter(u => u.phone.includes(q)||(u.firstName||'').includes(q)||(u.lastName||'').includes(q));
-  res.json(users.map(u => ({ id:u.id, phone:u.phone, firstName:u.firstName||'', lastName:u.lastName||'', isAdmin:u.isAdmin, banned:!!u.banned, createdAt:u.createdAt, purchaseCount:(u.purchases||[]).length, termsAccepted:!!u.termsAccepted, termsAcceptedAt:u.termsAcceptedAt||null })));
+  res.json(users.map(u => ({ id:u.id, phone:u.phone, firstName:u.firstName||'', lastName:u.lastName||'', isAdmin:u.isAdmin, banned:!!u.banned, phoneVerified:!!u.phoneVerified, createdAt:u.createdAt, purchaseCount:(u.purchases||[]).length, termsAccepted:!!u.termsAccepted, termsAcceptedAt:u.termsAcceptedAt||null })));
 });
 
 /* ─── Feature 4: مدیریت کاربران (ارتقا/تنزل نقش، مسدودسازی) ─── */

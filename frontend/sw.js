@@ -7,7 +7,7 @@
    • /api/* is NEVER cached (always live)
    bump VERSION on every deploy so clients pick up new assets.
 ═══════════════════════════════════════════════════════════ */
-const VERSION = '2.0.0';
+const VERSION = '2.1.0';
 const CACHE = 'tb-' + VERSION;
 
 /* app shell — kept resilient: a 404 on any single item won't fail install */
