@@ -34,12 +34,11 @@ const db = { get: t => chain(t, cache[t] || [], false) };
 const p = require.resolve('./db-mysql');
 require.cache[p] = { id: p, filename: p, loaded: true, exports: { db, init: async () => true, TABLES } };
 
-/* در حالت تست پیامک واقعی فرستاده نمی‌شود و کد در پاسخ API برمی‌گردد.
-   برای تست ارسال واقعی:  node dev-memory-server.js --real-sms   */
-if (!process.argv.includes('--real-sms')) {
-  process.env.SMS_API_KEY = '';
-  process.env.OTP_DEV_MODE = 'true';
-}
+/* این سرور فقط برای تست است، پس کد تایید همیشه در پاسخ API برمی‌گردد.
+   به‌طور پیش‌فرض پیامک واقعی فرستاده نمی‌شود؛ برای ارسال واقعی:
+     node dev-memory-server.js --real-sms                        */
+process.env.OTP_DEV_MODE = 'true';
+if (!process.argv.includes('--real-sms')) process.env.SMS_API_KEY = '';
 
 console.log('⚠  حالت تست — دیتابیس در حافظه (با ری‌استارت پاک می‌شود)');
 require('./server.js');
