@@ -1,16 +1,16 @@
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   Service Worker â€” Ú¯Ø±Ù…Ø§Ø¨Ù†Ø¯ÛŒ Ø³Ø§Ø®ØªÙ…Ø§Ù† (PWA)
-   â€¢ versioned cache â†’ old caches purged on each release
-   â€¢ app shell precached for offline use
-   â€¢ navigations: network-first (fresh pages online, cached when offline)
-   â€¢ static assets: stale-while-revalidate (fast + auto-updates)
-   â€¢ /api/* is NEVER cached (always live)
+/* Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
+   Service Worker Ã¢â‚¬â€ ÃšÂ¯Ã˜Â±Ã™â€¦Ã˜Â§Ã˜Â¨Ã™â€ Ã˜Â¯Ã›Å’ Ã˜Â³Ã˜Â§Ã˜Â®Ã˜ÂªÃ™â€¦Ã˜Â§Ã™â€  (PWA)
+   Ã¢â‚¬Â¢ versioned cache Ã¢â€ â€™ old caches purged on each release
+   Ã¢â‚¬Â¢ app shell precached for offline use
+   Ã¢â‚¬Â¢ navigations: network-first (fresh pages online, cached when offline)
+   Ã¢â‚¬Â¢ static assets: stale-while-revalidate (fast + auto-updates)
+   Ã¢â‚¬Â¢ /api/* is NEVER cached (always live)
    bump VERSION on every deploy so clients pick up new assets.
-â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
-const VERSION = '2.2.0';
+Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â */
+const VERSION = '2.0.1';
 const CACHE = 'tb-' + VERSION;
 
-/* app shell â€” kept resilient: a 404 on any single item won't fail install */
+/* app shell Ã¢â‚¬â€ kept resilient: a 404 on any single item won't fail install */
 const SHELL = [
   '/', '/index.html', '/shop.html', '/qr.html', '/about.html', '/contact.html',
   '/dashboard.html', '/detail.html', '/checkout.html', '/terms.html', '/404.html',
@@ -55,7 +55,7 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  /* page navigations â†’ network-first, fall back to cache, then offline shell */
+  /* page navigations Ã¢â€ â€™ network-first, fall back to cache, then offline shell */
   if (req.mode === 'navigate') {
     e.respondWith(
       fetch(req)
@@ -65,7 +65,7 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  /* static assets â†’ stale-while-revalidate */
+  /* static assets Ã¢â€ â€™ stale-while-revalidate */
   e.respondWith(
     caches.match(req).then((cached) => {
       const net = fetch(req).then((r) => {

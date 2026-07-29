@@ -214,6 +214,8 @@ const OTP_TTL_MINUTES  = Math.min(30, Math.max(1, parseInt(process.env.OTP_TTL_M
 const OTP_TTL_MS       = OTP_TTL_MINUTES * 60 * 1000;
 const OTP_RESEND_MS    = 60 * 1000;         /* فاصله‌ی ارسال مجدد: ۶۰ ثانیه */
 const OTP_MAX_ATTEMPTS = 5;                 /* تلاش اشتباه مجاز */
+/* چند کدِ آخر هم‌زمان معتبر بمانند (دلیلش در issueOtp توضیح داده شده) */
+const OTP_KEEP_CODES   = 3;
 const OTP_MAX_PER_HOUR = 6;                 /* سقف درخواست کد برای هر شماره در ساعت */
 const RESET_TTL_MS     = 10 * 60 * 1000;    /* اعتبار توکن تغییر رمز */
 
@@ -316,7 +318,26 @@ async function issueOtp(purpose, phone, payload) {
   const code = genOtp();
   const info = await sendOtpSms(phone, code);
   hourlyMark(phone);
-  otpStore.set(key, { code, exp: Date.now() + OTP_TTL_MS, tries: 0, sentAt: Date.now(), payload: payload || null });
+
+  /* ─── چرا چند کد هم‌زمان معتبر می‌ماند ───
+     sms.ir صف را دسته‌ای تخلیه می‌کند: در گزارش پنل دو پیامکی که با
+     ۱.۵ دقیقه فاصله فرستاده شده بودند، هر دو در یک دقیقه‌ی یکسان تحویل
+     شدند. کاربر وقتی پیامک دیر می‌رسد دکمه‌ی «ارسال مجدد» را می‌زند و
+     بعد چند پیامک با کدهای متفاوت یک‌جا به دستش می‌رسد.
+     اگر فقط آخرین کد را نگه داریم، کدی که کاربر اول می‌بیند باطل است و
+     خطای «کد اشتباه» می‌گیرد — دقیقاً وقتی که از قبل هم کلافه است.
+     پس آخرین OTP_KEEP_CODES کدِ منقضی‌نشده معتبر می‌مانند. */
+  const now = Date.now();
+  const prevCodes = (prev?.codes || []).filter(c => c.exp > now);
+  const codes = [...prevCodes, { code, exp: now + OTP_TTL_MS }].slice(-OTP_KEEP_CODES);
+
+  otpStore.set(key, {
+    codes,
+    exp: Math.max(...codes.map(c => c.exp)),  /* برای پاکسازی دوره‌ای */
+    tries: prev?.tries || 0,                  /* شمارش تلاش با ارسال مجدد صفر نمی‌شود */
+    sentAt: now,
+    payload: payload || prev?.payload || null,
+  });
   return { code, info };
 }
 
@@ -327,7 +348,14 @@ function checkOtp(purpose, phone, code) {
   if (!rec)                 return { ok: false, status: 400, error: 'کدی برای این شماره ارسال نشده — دوباره درخواست کنید' };
   if (rec.exp < Date.now()) { otpStore.delete(key); return { ok: false, status: 410, error: 'کد منقضی شده — کد جدید بگیرید' }; }
   if (rec.tries >= OTP_MAX_ATTEMPTS) { otpStore.delete(key); return { ok: false, status: 429, error: 'تعداد تلاش بیش از حد — کد جدید بگیرید' }; }
-  if (!safeEqual(String(code || '').trim(), rec.code)) {
+  /* هر کدی که هنوز منقضی نشده قبول است — نه فقط آخرین کد.
+     ⚠ روی همه‌ی کدها حلقه می‌زنیم و بعد نتیجه را می‌سنجیم، نه اینکه با
+     اولین تطابق بیرون بپریم؛ وگرنه زمانِ اجرا لو می‌دهد چند کد فعال است. */
+  const entered = String(code || '').trim();
+  const nowMs = Date.now();
+  let matched = false;
+  for (const c of rec.codes) if (c.exp > nowMs && safeEqual(entered, c.code)) matched = true;
+  if (!matched) {
     rec.tries++;
     return { ok: false, status: 401, error: `کد وارد شده اشتباه است (${OTP_MAX_ATTEMPTS - rec.tries} تلاش باقی مانده)` };
   }

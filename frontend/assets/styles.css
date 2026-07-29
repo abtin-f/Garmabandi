@@ -1468,6 +1468,8 @@ button .ic,a .ic,.cta-a .ic,.cta-b .ic,.nb .ic{vertical-align:-.18em}
 .otp-ttl{font-size:1.05rem;font-weight:800;margin-bottom:.4rem}
 .otp-sub{font-size:12.5px;color:var(--muted);line-height:1.95}
 .otp-sub b{color:var(--text);font-weight:700;direction:ltr;display:inline-block;unicode-bidi:embed;letter-spacing:.02em}
+.otp-hint{font-size:11.5px;color:var(--faint);line-height:1.85;margin-top:.5rem;
+  background:var(--bg3);border:1px solid var(--rim);border-radius:9px;padding:.5rem .7rem}
 
 /* ─── صحنه‌ی انیمیشن ─── */
 .otp-stage{position:relative;height:130px;margin:.6rem 0 .2rem;display:grid;place-items:center;overflow:hidden}

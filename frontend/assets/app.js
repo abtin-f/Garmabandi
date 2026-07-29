@@ -198,7 +198,11 @@ function authExtras(){
   '<div id="fO" style="display:none">'+
     '<div class="otp-head"><div class="otp-ico">'+ICO_PHONE+'</div>'+
       '<div class="otp-ttl">کد تایید را وارد کنید</div>'+
-      '<p class="otp-sub">کد ۵ رقمی به شماره <b id="otpPhone"></b> پیامک شد</p></div>'+
+      '<p class="otp-sub">کد ۵ رقمی به شماره <b id="otpPhone"></b> پیامک شد</p>'+
+      /* انتظار درست بساز: تحویل پیامک در ایران گاهی چند دقیقه طول می‌کشد.
+         بدون این جمله، کاربر فکر می‌کند خراب شده و پشت‌سرهم «ارسال مجدد»
+         می‌زند که هم اعتبار پیامک می‌سوزد هم تجربه بدتر می‌شود. */
+      '<p class="otp-hint">رسیدن پیامک ممکن است تا چند دقیقه طول بکشد. اگر چند کد دریافت کردید، هر کدام از آن‌ها کار می‌کند.</p></div>'+
     '<div class="otp-stage" id="otpStage">'+
       '<input id="otpInput" class="otp-hid" type="text" inputmode="numeric" pattern="[0-9]*" '+
         'autocomplete="one-time-code" maxlength="5" aria-label="کد تایید">'+
@@ -407,7 +411,7 @@ function otpStart(ctx){
   /* حالت توسعه (OTP_DEV_MODE=true روی سرور) */
   if(ctx.devCode){console.log("[OTP dev] کد:",ctx.devCode);toast("کد تست: "+ctx.devCode,"nfo");}
   else if(ctx.resent)toast("کد قبلی هنوز معتبر است","nfo");
-  else toast("کد تایید پیامک شد","ok");
+  else toast("کد ارسال شد — ممکن است چند دقیقه طول بکشد","ok");
 }
 function otpBack(){
   if(otpBusy)return;
@@ -442,7 +446,7 @@ async function otpResend(){
     otpReset();document.getElementById("otpInput").focus();
     otpStartTimer(d.resendIn||60);
     if(d.devCode){console.log("[OTP dev] کد:",d.devCode);toast("کد تست: "+d.devCode,"nfo");}
-    else toast("کد جدید ارسال شد","ok");
+    else toast("کد جدید ارسال شد — کد قبلی هم هنوز معتبر است","ok");
   }catch(e){
     otpErr(e.message);
     otpStartTimer(e.retryAfter||30);

@@ -84,6 +84,28 @@ function ok(name, cond, extra) {
   r = await post('/auth/otp/send', { purpose: 'register', phone: '09131234567', password: '123456', firstName: 'Ali', lastName: 'ب' });
   ok('نام انگلیسی رد می‌شود', r.status === 400, r);
 
+  console.log('\n── ۷) چند کد هم‌زمان معتبرند (پیامک دیررس) ──');
+  /* سناریوی واقعی: کاربر کد می‌گیرد، پیامک دیر می‌رسد، «ارسال مجدد» می‌زند،
+     بعد هر دو پیامک با هم می‌رسند و اولی را وارد می‌کند. */
+  r = await post('/auth/otp/send', { purpose: 'reset', phone: '09121112233' });
+  ok('کد اول', r.status === 200 && r.body.devCode, r);
+  const code1 = r.body.devCode;
+  await new Promise(s => setTimeout(s, 61000));   /* رد شدن از فاصله‌ی ارسال مجدد */
+  r = await post('/auth/otp/send', { purpose: 'reset', phone: '09121112233' });
+  ok('کد دوم', r.status === 200 && r.body.devCode && r.body.devCode !== code1, r);
+  const code2 = r.body.devCode;
+  r = await post('/auth/otp/verify', { purpose: 'reset', phone: '09121112233', code: code1 });
+  ok('کدِ قدیمی هنوز کار می‌کند', r.status === 200 && r.body.resetToken, r);
+
+  r = await post('/auth/otp/send', { purpose: 'reset', phone: '09129998877' });
+  const c1 = r.body.devCode;
+  await new Promise(s => setTimeout(s, 61000));
+  r = await post('/auth/otp/send', { purpose: 'reset', phone: '09129998877' });
+  r = await post('/auth/otp/verify', { purpose: 'reset', phone: '09129998877', code: r.body.devCode });
+  ok('کدِ جدید هم کار می‌کند', r.status === 200 && r.body.resetToken, r);
+  r = await post('/auth/otp/verify', { purpose: 'reset', phone: '09129998877', code: c1 });
+  ok('بعد از مصرف، هیچ‌کدام دیگر کار نمی‌کنند', r.status === 400, r);
+
   console.log('\n── ۶) مسیر قدیمی ثبت‌نام بسته است ──');
   r = await post('/auth/register', { phone: '09141112222', password: '123456', firstName: 'حسن', lastName: 'نوری' });
   ok('دور زدن تایید شماره ممکن نیست', r.status === 410 && r.body.code === 'USE_OTP', r);
