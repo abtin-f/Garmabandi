@@ -222,6 +222,23 @@ async function makeUser(phone, firstName, lastName) {
   const adminMine = (await call('GET', '/api/orders/my', admin)).d.filter(o => o.productId === 'p9' && o.status !== 'expired');
   ok('در پنل کاربر فقط یک ردیف برای آن محصول می‌ماند', adminMine.length === 1, adminMine.length);
 
+  /* باگ: نشانگر «کار انجام‌نشده» باید فقط فیش‌های در انتظار را بشمارد.
+     سفارش ردشده کار انجام‌شده است و نباید عدد را روی ۱ نگه دارد. */
+  const statsNow = (await call('GET', '/api/admin/stats', admin)).d;
+  const listNow = (await call('GET', '/api/admin/orders', admin)).d;
+  const reallyPending = listNow.filter(o => o.status === 'pending_review').length;
+  ok('pendingOrders فقط pending_review را می‌شمارد',
+    statsNow.pendingOrders === reallyPending, { stats: statsNow.pendingOrders, real: reallyPending });
+  ok('سفارش ردشده جزو pendingOrders نیست',
+    listNow.some(o => o.status === 'rejected') ? statsNow.pendingOrders < listNow.length : true);
+
+  /* تشخیص تنظیمات پیامک */
+  const health = await call('GET', '/api/admin/sms-health', admin);
+  ok('مسیر sms-health جواب می‌دهد', health.status === 200 && 'ready' in health.d, health.d);
+  ok('نبودِ تنظیمات پیامک گزارش می‌شود', Array.isArray(health.d.missing), health.d.missing);
+  const healthUser = await call('GET', '/api/admin/sms-health', buyer);
+  ok('sms-health برای کاربر عادی بسته است', healthUser.status === 403, healthUser.status);
+
   /* ─── ۸. وضعیت در پنل کاربر ─── */
   console.log('\n── پنل کاربر ──');
   const mine = (await call('GET', '/api/orders/my', buyer)).d;

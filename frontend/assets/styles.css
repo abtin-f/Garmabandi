@@ -1635,3 +1635,34 @@ button .ic,a .ic,.cta-a .ic,.cta-b .ic,.nb .ic{vertical-align:-.18em}
   .pay-num{font-size:.92rem;letter-spacing:.08em}
   .pay-amt{flex-direction:column;align-items:flex-start;gap:.3rem}
 }
+
+/* ═══════════ «خریدهای من» روی موبایل ═══════════
+   ردیف سفارش یک flex افقی است: آیکون + متن + ستون وضعیت.
+   ستون وضعیت flex-shrink:0 است و بعد از اضافه شدن برچسب‌های بلندِ
+   کارت‌به‌کارت («در انتظار بررسی فیش» + «قفل تا تأیید») روی صفحه‌ی
+   باریک تمام عرض را می‌گرفت و ستون عنوان به چند پیکسل می‌رسید —
+   نتیجه‌اش متنی بود که کلمه‌به‌کلمه عمودی می‌شکست.
+   روی موبایل کل ردیف عمودی می‌شود و ستون وضعیت یک ردیف تمام‌عرض. */
+@media(max-width:640px){
+  /* گرید دو ستونه: آیکون و عنوان در ردیف اول، وضعیت و دکمه در ردیف دوم
+     با عرض کامل. flex ساده اینجا جواب نمی‌دهد چون ستون وضعیت
+     flex-shrink:0 است و باید کنار برود، نه فشرده شود. */
+  .pi{display:grid;grid-template-columns:36px 1fr;gap:.55rem .7rem;
+    align-items:start;padding:.85rem}
+  .pi-ico{width:36px;height:36px;font-size:1.05rem;grid-column:1;grid-row:1}
+  .pi-inf{grid-column:2;grid-row:1;min-width:0}
+  .pi-nm{white-space:normal;line-height:1.65;font-size:13px}
+  .pi-mt{line-height:1.7}
+  .pi-r{grid-column:1/-1;grid-row:2;flex-direction:row;align-items:center;
+    justify-content:space-between;width:100%;gap:.5rem;flex-wrap:wrap}
+  .pi-st{font-size:11px;padding:4px 10px;white-space:nowrap}
+  .pi-dl,.pi-lock{font-size:12px;padding:8px 14px;white-space:nowrap}
+  .pi-dl{flex:1;text-align:center}
+  .pi-note,.pi-reject{font-size:11.5px}
+}
+/* صفحه‌های خیلی باریک — وضعیت و دکمه زیر هم */
+@media(max-width:380px){
+  .pi-r{flex-direction:column;align-items:stretch}
+  .pi-st{text-align:center}
+  .pi-lock{justify-content:center}
+}

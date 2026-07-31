@@ -1840,12 +1840,42 @@ async function submitReject(){
   }catch(e){toast(e.message,"err");}
   finally{btn.disabled=false;}
 }
+/* ─── نشانگر «کار انجام‌نشده» ───
+   فقط فیش‌هایی که منتظر بررسی‌اند شمرده می‌شوند. سفارش ردشده کارِ
+   انجام‌شده است و نباید بشمارد.
+   ⚠ حتماً باید در حالت صفر پاک شود؛ قبلاً فقط add می‌شد و هرگز remove
+   نمی‌شد، برای همین بعد از رد کردن فیش، عدد ۱ روی «سفارشات» می‌ماند. */
+function refreshBadges(){
+  const pending=allOrders.filter(o=>o.status==="pending_review").length;
+  const rejected=allOrders.filter(o=>o.status==="rejected").length;
+
+  const b=document.getElementById("issueBadge");
+  if(b){b.textContent=pending;b.classList.toggle("show",pending>0);}
+
+  const banner=document.getElementById("oiBanner");
+  if(banner){
+    banner.classList.toggle("show",pending>0);
+    if(pending>0){
+      document.getElementById("oiBannerTit").textContent=`${pending} فیش در انتظار بررسی`;
+      document.getElementById("oiBannerSub").textContent=
+        rejected?`${rejected} سفارش هم قبلاً رد شده است`:"برای تأیید یا رد، فیش را باز کنید";
+    }
+  }
+  const kP=document.getElementById("kP");if(kP)kP.textContent=pending;
+  const kF=document.getElementById("kF");if(kF)kF.textContent=rejected;
+  const ocAll=document.getElementById("ocAll");if(ocAll)ocAll.textContent=allOrders.length;
+  const ocPaid=document.getElementById("ocPaid");if(ocPaid)ocPaid.textContent=allOrders.filter(o=>o.status==="paid").length;
+  const ocFail=document.getElementById("ocFail");if(ocFail)ocFail.textContent=rejected;
+  const ocPend=document.getElementById("ocPend");if(ocPend)ocPend.textContent=pending;
+}
+
 async function refreshOrders(){
   try{
     allOrders=await api("GET","/admin/orders");
-    renderOrders();renderDash();
+    renderOrders();renderDash();refreshBadges();
     const s=await api("GET","/admin/stats");
     const kO=document.getElementById("kO");if(kO)kO.textContent=s.totalOrders;
+    const kR=document.getElementById("kR");if(kR)kR.textContent=Math.round(s.totalRevenue/1000)+"K";
   }catch{}
 }
 
@@ -1891,13 +1921,7 @@ async function init(){
     document.getElementById("kR").textContent=Math.round(stats.totalRevenue/1000)+"K";
     document.getElementById("kF").textContent=stats.failedOrders||0;
     document.getElementById("kP").textContent=stats.pendingOrders||0;
-    const issues=(stats.failedOrders||0)+(stats.pendingOrders||0);
-    if(issues>0){
-      const b=document.getElementById("issueBadge");b.textContent=issues;b.classList.add("show");
-      const banner=document.getElementById("oiBanner");banner.classList.add("show");
-      document.getElementById("oiBannerTit").textContent=`${issues} سفارش نیاز به بررسی دارد`;
-      document.getElementById("oiBannerSub").textContent=`${stats.pendingOrders||0} فیش در انتظار بررسی، ${stats.failedOrders||0} ردشده`;
-    }
+    refreshBadges();
     const f=ords.filter(o=>o.status==="failed"||o.status==="rejected").length,
           p=ords.filter(o=>o.status==="pending_review").length,
           pd=ords.filter(o=>o.status==="paid").length;

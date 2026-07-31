@@ -1,31 +1,28 @@
-Fix three bugs found on the live site after the 2.1.0 rollout
+Clear the admin badge on reject, fix the mobile order row, surface SMS config
 
-1) One purchase showed four rows. The old backend created a fresh order
-   every time the buy button was pressed, and those rows carry the
-   legacy status 'pending', which is not in OPEN_STATUSES — so the new
-   reuse logic never matched them and kept adding more. A startup
-   migration moves 'pending' to awaiting_payment (backfilling payAmount
-   and expiresAt) and collapses duplicate open orders per user+product,
-   keeping the one with a receipt, else the newest. The dashboard
-   dedupes too, as a belt-and-braces measure.
+1) The "1" badge on سفارشات never went away after rejecting a receipt.
+   Two reasons: the badge was only ever .add("show"), never removed, and
+   it counted failed+pending, so a rejected order kept it lit. A rejected
+   order is finished work. refreshBadges() now counts only pending_review
+   and toggles instead of adding, and every mutation calls it.
 
-2) Admin was stuck on those orders: the approve/reject buttons only
-   render for pending_review, so a legacy 'pending' order had no action
-   at all. Same migration fixes it; the admin card now also explains
-   itself when an order is simply waiting for the buyer's receipt.
+2) The order row broke on phones — the title column collapsed to a few
+   pixels and wrapped one word per line. .pi-r is flex-shrink:0 and the
+   card-to-card labels ("در انتظار بررسی فیش" + "قفل تا تأیید") are wide,
+   so they ate the row. Under 640px the row is now a 2-column grid with
+   the status pill and button on their own full-width row; under 380px
+   those stack. Verified in a 390px iframe: .pi-inf gets 274 of 351px and
+   the title renders on one line.
 
-3) "توکن نامعتبر" and the terms modal reappearing had two causes:
-   - /auth/login never returned termsAccepted, and the frontend stores
-     `me` in localStorage and never refreshed it, so a user who accepted
-     the terms long ago saw the modal on every purchase, forever.
-     login, /auth/me and otp/verify now share one publicUser() shape.
-   - a 401 surfaced as a raw error with no recovery: the user still
-     looked signed in but nothing worked. api() now clears the session
-     and opens the login dialog, and init() refreshes `me` from
-     /auth/me on every page load, which also detects a dead token.
+3) Order SMS never sent because the three template ids and
+   ADMIN_ALERT_PHONE are still empty in .env on the host — notifySms
+   returned silently, so there was no way to tell from outside. It now
+   counts sent/failed/skipped with a reason, warns loudly at startup, and
+   exposes GET /api/admin/sms-health listing exactly which vars are
+   missing. The templates still have to be created in the sms.ir panel;
+   /send/verify only accepts approved templates, not free text.
 
-12 regression tests added (52 total in dev-test-c2c.js); the dev server
-now seeds four legacy duplicate orders so the migration is covered.
+5 more regression tests (57 total).
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01YHMyCE5EBKZz4BZUBZ8qQt

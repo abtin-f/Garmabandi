@@ -406,8 +406,16 @@ async function sendOtpSms(phone, code) {
    بستنِ پاسخِ HTTP به آن، پنل ادمین را بی‌دلیل کند می‌کند. */
 function notifySms(phone, templateId, params) {
   const to = normalizePhone(phone);
+  /* پیام‌های ارسال‌نشده شمرده می‌شوند تا در /api/admin/sms-health دیده
+     شوند — وگرنه این خطا کاملاً بی‌صدا است و تازه وقتی معلوم می‌شود که
+     مشتری بگوید «پیامکی نیامد». */
   if (!to || !SMS_API_KEY || !templateId) {
-    console.log(`📵 [SMS] ارسال نشد (تنظیم‌نشده) → ${phone}`, params);
+    const why = !SMS_API_KEY ? 'SMS_API_KEY خالی است'
+              : !templateId  ? 'آی‌دی قالب تنظیم نشده (SMS_TPL_… در .env)'
+              : `شماره‌ی گیرنده معتبر نیست: ${phone}`;
+    smsHealth.skipped++;
+    smsHealth.lastError = why;
+    console.warn(`📵 [SMS] ارسال نشد — ${why}`, params);
     return;
   }
   const body = {
@@ -426,9 +434,15 @@ function notifySms(phone, templateId, params) {
     signal: AbortSignal.timeout ? AbortSignal.timeout(12000) : undefined,
   })
     .then(r => r.json().catch(() => ({})))
-    .then(d => { if (d.status !== 1) console.error('❌ notifySms:', JSON.stringify(d)); })
-    .catch(e => console.error('❌ notifySms:', e.message));
+    .then(d => {
+      if (d.status === 1) { smsHealth.sent++; }
+      else { smsHealth.failed++; smsHealth.lastError = d.message || JSON.stringify(d); console.error('❌ notifySms:', JSON.stringify(d)); }
+    })
+    .catch(e => { smsHealth.failed++; smsHealth.lastError = e.message; console.error('❌ notifySms:', e.message); });
 }
+
+/* شمارنده‌ی وضعیت پیامک‌های اطلاع‌رسانی — از زمان بالا آمدن سرور */
+const smsHealth = { sent: 0, failed: 0, skipped: 0, lastError: null };
 
 /* ارقام فارسی/عربی → لاتین، و نرمال‌سازی شماره موبایل به شکل 09xxxxxxxxx */
 function toLatinDigits(s) {
@@ -1310,6 +1324,25 @@ app.post('/api/admin/revenue/reset', adminAuth, async (req, res) => {
   }
 });
 
+/* ─── سلامت پیامک ───
+   نشان می‌دهد کدام تکه‌ی تنظیمات جا مانده. بدون این، وقتی پیامکی نمی‌رسد
+   هیچ راهی برای فهمیدن علت از بیرون وجود ندارد. */
+app.get('/api/admin/sms-health', adminAuth, (req, res) => {
+  const missing = [];
+  if (!SMS_API_KEY)           missing.push('SMS_API_KEY');
+  if (!SMS_TPL_ADMIN_RECEIPT) missing.push('SMS_TPL_ADMIN_RECEIPT (هشدار فیش جدید به ادمین)');
+  if (!SMS_TPL_ORDER_OK)      missing.push('SMS_TPL_ORDER_OK (تأیید سفارش به کاربر)');
+  if (!SMS_TPL_ORDER_NO)      missing.push('SMS_TPL_ORDER_NO (رد سفارش به کاربر)');
+  if (!normalizePhone(ADMIN_ALERT_PHONE)) missing.push('ADMIN_ALERT_PHONE (شماره‌ی ادمین)');
+  res.json({
+    ready: missing.length === 0,
+    missing,
+    otpTemplate: SMS_TEMPLATE_ID || null,
+    adminPhone: ADMIN_ALERT_PHONE ? ADMIN_ALERT_PHONE.replace(/(\d{4})\d{4}(\d{3})/, '$1****$2') : null,
+    counters: smsHealth,
+  });
+});
+
 /* ─── حالت تعمیر — وضعیت و تغییر ─── */
 app.get('/api/admin/maintenance', adminAuth, async (req, res) => {
   res.json({ maintenance: isMaintenance() });
@@ -1753,6 +1786,16 @@ app.use((req, res) => {
     await seedData();
     await migrateLegacyOrders();
     await sweepExpiredOrders();
+    /* هشدار روشن موقع استارت — تا «پیامک نمی‌رسد» تبدیل به معما نشود */
+    const smsMissing = [
+      !SMS_API_KEY && 'SMS_API_KEY',
+      !SMS_TPL_ADMIN_RECEIPT && 'SMS_TPL_ADMIN_RECEIPT',
+      !SMS_TPL_ORDER_OK && 'SMS_TPL_ORDER_OK',
+      !SMS_TPL_ORDER_NO && 'SMS_TPL_ORDER_NO',
+      !normalizePhone(ADMIN_ALERT_PHONE) && 'ADMIN_ALERT_PHONE',
+    ].filter(Boolean);
+    if (smsMissing.length)
+      console.warn(`⚠ پیامک اطلاع‌رسانی غیرفعال است — این‌ها در .env خالی‌اند: ${smsMissing.join('، ')}`);
     app.listen(PORT, () => console.log(`\n🔥 http://localhost:${PORT}\n`));
   } catch (e) {
     console.error('❌ اتصال به دیتابیس ناموفق بود:', e.message);
