@@ -70,6 +70,18 @@ for (let i = 1; i <= 11; i++) {
   });
 }
 
+/* ─── سفارش‌های نسخه‌ی قبل ───
+   دقیقاً همان چیزی که روی سایت زنده دیده شد: چهار سفارشِ باز برای یک
+   محصول با وضعیت قدیمی 'pending'. مهاجرت باید آن‌ها را به
+   awaiting_payment ببرد و فقط یکی را باز نگه دارد. */
+for (let i = 0; i < 4; i++) {
+  cache.orders.push({
+    id: 'legacy-' + i, userId: 'u-admin', productId: 'p9',
+    productTitle: 'سفارش قدیمی تکراری', amount: 18000,
+    status: 'pending', createdAt: new Date(Date.now() - i * 60_000).toISOString(),
+  });
+}
+
 console.log('⚠  حالت تست — دیتابیس در حافظه (با ری‌استارت پاک می‌شود)');
 console.log('   ورود ادمین:  09120000000 / admin123');
 require('./server.js');

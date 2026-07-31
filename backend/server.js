@@ -185,6 +185,27 @@ function lightProduct(p) {
 }
 function lightProducts(arr) { return (arr || []).map(lightProduct); }
 
+/* ─── شکل استانداردِ کاربر برای فرانت‌اند ───
+   یک تعریف، همه‌جا. قبلاً login و me و otp/verify هرکدام دستی یک
+   آبجکت می‌ساختند و login فیلد termsAccepted را جا انداخته بود؛
+   نتیجه‌اش این بود که مودال قوانین سر هر خرید دوباره باز می‌شد.
+   رمز عبور هرگز از اینجا بیرون نمی‌رود. */
+function publicUser(u) {
+  if (!u) return null;
+  return {
+    id: u.id,
+    phone: u.phone,
+    firstName: u.firstName || '',
+    lastName: u.lastName || '',
+    isAdmin: !!u.isAdmin,
+    purchases: Array.isArray(u.purchases) ? u.purchases : [],
+    createdAt: u.createdAt,
+    phoneVerified: !!u.phoneVerified,
+    termsAccepted: !!u.termsAccepted,
+    termsAcceptedAt: u.termsAcceptedAt || null,
+  };
+}
+
 /* ─── اعتبارسنجی نام (مطابق فرانت‌اند) ───
    • نام: بدون حروف انگلیسی، حداکثر ۱۰ کاراکتر
    • نام خانوادگی: حداکثر ۱۵ کاراکتر
@@ -565,9 +586,7 @@ app.post('/api/auth/otp/verify', async (req, res) => {
     };
     await db.get('users').push(user).write();
     const token = jwt.sign({ id: user.id, phone, isAdmin: false }, JWT_SECRET, { expiresIn: '30d' });
-    res.json({ success: true, token, user: {
-      id: user.id, phone, firstName: user.firstName, lastName: user.lastName,
-      isAdmin: false, purchases: [] } });
+    res.json({ success: true, token, user: publicUser(user) });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -616,14 +635,18 @@ app.post('/api/auth/login', async (req, res) => {
     if (!await bcrypt.compare(password, user.password)) return res.status(401).json({ error: 'رمز اشتباه' });
     if (user.banned) return res.status(403).json({ error: 'حساب شما مسدود شده است. با پشتیبانی تماس بگیرید.' });
     const token = jwt.sign({ id: user.id, phone, isAdmin: user.isAdmin }, JWT_SECRET, { expiresIn: '30d' });
-    res.json({ success: true, token, user: { id: user.id, phone, firstName: user.firstName||'', lastName: user.lastName||'', isAdmin: user.isAdmin, purchases: user.purchases } });
+    /* ⚠ termsAccepted حتماً باید اینجا باشد.
+       فرانت‌اند `me` را از همین پاسخ در localStorage می‌گذارد و دیگر
+       به‌روزش نمی‌کند؛ اگر این فیلد نباشد، کاربری که سال‌ها پیش قوانین
+       را پذیرفته، سر هر خرید دوباره مودال قوانین می‌بیند. */
+    res.json({ success: true, token, user: publicUser(user) });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.get('/api/auth/me', auth, async (req, res) => {
   const u = db.get('users').find({ id: req.user.id }).value();
   if (!u) return res.status(404).json({ error: 'کاربر یافت نشد' });
-  res.json({ id: u.id, phone: u.phone, firstName: u.firstName||'', lastName: u.lastName||'', isAdmin: u.isAdmin, purchases: u.purchases, createdAt: u.createdAt, termsAccepted: !!u.termsAccepted, termsAcceptedAt: u.termsAcceptedAt||null });
+  res.json(publicUser(u));
 });
 
 app.put('/api/auth/profile', auth, async (req, res) => {
@@ -725,6 +748,58 @@ app.post('/api/search', async (req, res) => {
    • trackingCode یکتاست (هم در کد، هم با ایندکس یکتای دیتابیس).
 ═══════════════════════════════════════════════════════════ */
 const OPEN_STATUSES = ['awaiting_payment', 'pending_review', 'rejected'];
+
+/* ═══ مهاجرت سفارش‌های نسخه‌ی قبل ═══
+   دو چیز را تمیز می‌کند و فقط یک‌بار (موقع بالا آمدن سرور) اجرا می‌شود:
+
+   ۱. وضعیت 'pending' نسخه‌ی قدیم. آن سفارش‌ها هرگز پرداخت نشده‌اند و
+      فیشی هم ندارند، پس به awaiting_payment می‌روند. اگر همان‌طور
+      می‌ماندند، در پنل ادمین «در انتظار» نشان داده می‌شدند بدون هیچ
+      دکمه‌ی تأیید یا رد — چون تأیید فقط از pending_review ممکن است.
+
+   ۲. سفارش‌های بازِ تکراری برای یک محصول. بک‌اند قدیم هر بار که کاربر
+      دکمه‌ی خرید را می‌زد یک سفارش تازه می‌ساخت؛ نتیجه‌اش این بود که
+      یک خرید در پنل کاربر چهار ردیف نشان می‌داد. جدیدترین می‌ماند،
+      بقیه expired می‌شوند. */
+async function migrateLegacyOrders() {
+  const all = db.get('orders').value();
+  let fixed = 0, collapsed = 0;
+
+  for (const o of all) {
+    if (o.status !== 'pending') continue;
+    const base = Number(o.amount) || 0;
+    await db.get('orders').find({ id: o.id }).assign({
+      status: 'awaiting_payment',
+      payAmount: o.payAmount || uniquePayAmount(base),
+      /* مهلت از زمان ساخت شمرده می‌شود، پس سفارش‌های کهنه در همان
+         پاکسازی بعدی منقضی می‌شوند و لیست را شلوغ نمی‌کنند */
+      expiresAt: o.expiresAt || new Date(new Date(o.createdAt || Date.now()).getTime() + ORDER_TTL_HOURS * 3600e3).toISOString(),
+    }).write();
+    fixed++;
+  }
+
+  const byKey = new Map();
+  for (const o of db.get('orders').value()) {
+    if (!OPEN_STATUSES.includes(o.status)) continue;
+    const k = o.userId + '|' + o.productId;
+    if (!byKey.has(k)) byKey.set(k, []);
+    byKey.get(k).push(o);
+  }
+  for (const group of byKey.values()) {
+    if (group.length < 2) continue;
+    /* سفارشی که فیش دارد ارزش بیشتری دارد، بعد جدیدترین */
+    group.sort((a, b) => {
+      const w = s => (s === 'pending_review' ? 2 : s === 'rejected' ? 1 : 0);
+      return w(b.status) - w(a.status) ||
+        new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+    });
+    for (const dead of group.slice(1)) {
+      await db.get('orders').find({ id: dead.id }).assign({ status: 'expired' }).write();
+      collapsed++;
+    }
+  }
+  if (fixed || collapsed) console.log(`🛠  سفارش‌ها: ${fixed} مهاجرت، ${collapsed} تکراری بسته شد`);
+}
 
 /* قیمت واقعی محصول با اعمال تخفیف — تنها منبع معتبر مبلغ */
 function priceOf(product) {
@@ -1676,6 +1751,8 @@ app.use((req, res) => {
     });
     console.log('✅ اتصال به دیتابیس MySQL برقرار شد');
     await seedData();
+    await migrateLegacyOrders();
+    await sweepExpiredOrders();
     app.listen(PORT, () => console.log(`\n🔥 http://localhost:${PORT}\n`));
   } catch (e) {
     console.error('❌ اتصال به دیتابیس ناموفق بود:', e.message);

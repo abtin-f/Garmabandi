@@ -176,7 +176,53 @@ async function makeUser(phone, firstName, lastName) {
   const retry = await postReceipt(other, tamper.d.orderId, { code: 'TRK3' + st });
   ok('بعد از رد می‌شود فیش تازه فرستاد', retry.status === 200, retry);
 
-  /* ─── ۷. وضعیت در پنل کاربر ─── */
+  /* ─── ۷. رگرسیون باگ‌های گزارش‌شده روی سایت زنده ─── */
+  console.log('\n── رگرسیون ──');
+
+  /* باگ ۳ الف: پاسخ ورود باید termsAccepted داشته باشد، وگرنه مودال
+     قوانین سر هر خرید دوباره باز می‌شود */
+  const lg = await call('POST', '/api/auth/login', null, { phone: '09120000000', password: 'admin123' });
+  ok('پاسخ ورود termsAccepted دارد', lg.d.user && 'termsAccepted' in lg.d.user, Object.keys(lg.d.user || {}));
+  ok('پاسخ ورود رمز عبور را لو نمی‌دهد', lg.d.user && !('password' in lg.d.user));
+  const meRes = await call('GET', '/api/auth/me', admin);
+  ok('/auth/me همان شکل را برمی‌گرداند',
+    ['termsAccepted', 'purchases', 'isAdmin', 'phone'].every(k => k in meRes.d), Object.keys(meRes.d));
+
+  /* باگ ۳ ب: توکن نامعتبر باید ۴۰۱ بدهد تا فرانت نشست را پاک کند */
+  const badTok = await call('GET', '/api/orders/my', 'not.a.real.token');
+  ok('توکن خراب → ۴۰۱', badTok.status === 401, badTok);
+
+  /* باگ ۱: چند بار زدن دکمه‌ی خرید نباید چند سفارش بسازد */
+  const p2 = prods.find(p => p.id !== target.id && !['p1', 'p2'].includes(p.id));
+  const a1 = await call('POST', '/api/orders/create', other, { productId: p2.id });
+  const a2 = await call('POST', '/api/orders/create', other, { productId: p2.id });
+  const a3 = await call('POST', '/api/orders/create', other, { productId: p2.id });
+  ok('سه بار خرید = یک سفارش', a1.d.orderId === a2.d.orderId && a2.d.orderId === a3.d.orderId,
+    [a1.d.orderId, a2.d.orderId, a3.d.orderId]);
+  const openSame = (await call('GET', '/api/orders/my', other)).d
+    .filter(o => o.productId === p2.id && !['expired', 'paid'].includes(o.status));
+  ok('فقط یک سفارش باز برای آن محصول دیده می‌شود', openSame.length === 1, openSame.length);
+
+  /* باگ ۲: سفارش بدون فیش نه تأیید می‌شود نه رد — ادمین نباید گیر کند */
+  const apprNoReceipt = await call('POST', `/api/admin/orders/${a1.d.orderId}/approve`, admin, {});
+  ok('سفارش بدون فیش تأیید نمی‌شود (۴۰۹)', apprNoReceipt.status === 409, apprNoReceipt);
+  const adminList = (await call('GET', '/api/admin/orders', admin)).d;
+  ok('هیچ سفارشی با وضعیت قدیمی pending نمانده',
+    !adminList.some(o => o.status === 'pending'),
+    adminList.filter(o => o.status === 'pending').length);
+
+  /* مهاجرت: چهار سفارش قدیمیِ تکراری روی p9 باید به یک سفارشِ باز
+     تبدیل شده باشند (بقیه expired) */
+  const oldRows = adminList.filter(o => o.id.startsWith('legacy-'));
+  ok('چهار سفارش قدیمی هنوز در دیتابیس هستند', oldRows.length === 4, oldRows.length);
+  const legacyOpen = oldRows.filter(o => !['expired', 'paid'].includes(o.status));
+  ok('فقط یکی از آن‌ها باز مانده', legacyOpen.length === 1, legacyOpen.map(o => o.status));
+  ok('سفارش بازِ مهاجرت‌یافته awaiting_payment است', legacyOpen[0]?.status === 'awaiting_payment', legacyOpen[0]?.status);
+  ok('مبلغ یکتا برایش ساخته شد', legacyOpen[0]?.payAmount > 18000, legacyOpen[0]?.payAmount);
+  const adminMine = (await call('GET', '/api/orders/my', admin)).d.filter(o => o.productId === 'p9' && o.status !== 'expired');
+  ok('در پنل کاربر فقط یک ردیف برای آن محصول می‌ماند', adminMine.length === 1, adminMine.length);
+
+  /* ─── ۸. وضعیت در پنل کاربر ─── */
   console.log('\n── پنل کاربر ──');
   const mine = (await call('GET', '/api/orders/my', buyer)).d;
   const paid = mine.find(o => o.id === order.orderId);

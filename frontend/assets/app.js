@@ -71,8 +71,28 @@ async function api(m,p,b){
     o.body=JSON.stringify(b);
   }
   const r=await fetch(API+p,o);const d=await r.json().catch(()=>({}));
-  if(!r.ok){const e=new Error(d.error||"خطا");e.code=d.code;e.status=r.status;e.retryAfter=d.retryAfter;throw e;}
+  if(!r.ok){
+    /* ─── توکن مرده ───
+       توکن ۳۰ روزه است و بعد از آن jwt.verify رد می‌کند. قبلاً فقط
+       پیام «توکن نامعتبر» نشان داده می‌شد و کاربر گیر می‌کرد: هنوز
+       لاگین به نظر می‌رسید (چون me در localStorage بود) ولی هیچ خریدی
+       جلو نمی‌رفت. حالا نشست پاک می‌شود و پنجره‌ی ورود باز می‌شود. */
+    if(r.status===401&&token){
+      clearSession();
+      toast("نشست شما منقضی شده — دوباره وارد شوید","err");
+      if(typeof openAuth==="function")openAuth("login");
+      const e=new Error("نشست منقضی شده");e.status=401;e.code="SESSION_EXPIRED";throw e;
+    }
+    const e=new Error(d.error||"خطا");e.code=d.code;e.status=r.status;e.retryAfter=d.retryAfter;throw e;
+  }
   return d;
+}
+/* پاک کردن نشست بدون رفرش صفحه */
+function clearSession(){
+  token=null;me=null;
+  localStorage.removeItem("tb_tk");localStorage.removeItem("tb_me");
+  try{syncAuthCookie();}catch{}
+  try{renderNav();}catch{}
 }
 function toast(msg,t="nfo"){const el=document.createElement("div");el.className="tst "+t;el.textContent=msg;document.getElementById("toasts").appendChild(el);setTimeout(()=>{el.style.opacity="0";el.style.transition="opacity .3s";setTimeout(()=>el.remove(),300);},3200);}
 function closeOvl(id){document.getElementById(id).classList.remove("on");}
@@ -1403,6 +1423,7 @@ async function loadDash(){
   document.getElementById("pfDt").value=me.createdAt?new Date(me.createdAt).toLocaleDateString("fa-IR"):"—";
   try{let orders=await api("GET","/orders/my");
     orders=orders.filter(o=>o.status!=="expired");
+    orders=dedupeOrders(orders);
     const paidCount=orders.filter(o=>o.unlocked).length;
     document.getElementById("pfCnt").textContent=paidCount+" محصول";const pl=document.getElementById("puList");
     if(!orders.length)pl.innerHTML=`<div class="empty"><div class="empty-i">${ic('package',16)}</div><p>هنوز خریدی نداشته‌اید<br><span style="color:var(--gold);cursor:pointer" onclick="go('shop')">به فروشگاه بروید</span></p></div>`;
@@ -1419,7 +1440,30 @@ const ORD_ST={
   pending_review:  {cls:"wait",txt:"در انتظار بررسی فیش",ico:"clock"},
   awaiting_payment:{cls:"pend",txt:"در انتظار پرداخت",   ico:"credit-card"},
   rejected:        {cls:"bad", txt:"رد شده",             ico:"alert"},
+  /* وضعیت نسخه‌ی قبل — سفارشی که هرگز پرداخت نشده */
+  pending:         {cls:"pend",txt:"در انتظار پرداخت",   ico:"credit-card"},
 };
+
+/* ─── حذف ردیف‌های تکراری ───
+   بک‌اند قدیم هر بار زدن دکمه‌ی خرید یک سفارش تازه می‌ساخت، پس یک خرید
+   می‌توانست چند ردیف نشان بدهد. سرور هنگام بالا آمدن این‌ها را جمع
+   می‌کند؛ این‌جا هم برای اطمینان نگه داشته شده — برای هر محصول فقط
+   «مهم‌ترین» سفارش می‌ماند: تأییدشده > در حال بررسی > ردشده > بقیه. */
+function dedupeOrders(list){
+  const rank=s=>s==="paid"?4:s==="pending_review"?3:s==="rejected"?2:1;
+  const best=new Map();
+  for(const o of list){
+    const cur=best.get(o.productId);
+    if(!cur||rank(o.status)>rank(cur.status)||
+      (rank(o.status)===rank(cur.status)&&
+       new Date(o.paidAt||o.submittedAt||o.createdAt||0)>new Date(cur.paidAt||cur.submittedAt||cur.createdAt||0))){
+      best.set(o.productId,o);
+    }
+  }
+  return [...best.values()].sort((a,b)=>
+    new Date(b.paidAt||b.submittedAt||b.createdAt||0)-new Date(a.paidAt||a.submittedAt||a.createdAt||0));
+}
+
 function orderRow(o){
   const st=ORD_ST[o.status]||ORD_ST.pending_review;
   const title=escHtml(o.product?.title||o.productTitle||"");
@@ -1427,7 +1471,7 @@ function orderRow(o){
   let action="";
   if(o.status==="paid"){
     action=`<button class="pi-dl" onclick="downloadProduct('${o.productId}','${(o.product?.title||o.productTitle||'').replace(/'/g,'')}','${(o.product?.fileName||'').replace(/'/g,'')}')">${ic('download',16)} دانلود</button>`;
-  }else if(o.status==="awaiting_payment"){
+  }else if(o.status==="awaiting_payment"||o.status==="pending"){
     action=`<button class="pi-dl pi-pay" onclick="startPayment(['${o.productId}'])">${ic('credit-card',16)} پرداخت</button>`;
   }else if(o.status==="rejected"){
     action=`<button class="pi-dl pi-pay" onclick="startPayment(['${o.productId}'])">${ic('upload',16)} ارسال دوباره فیش</button>`;
@@ -1750,6 +1794,21 @@ async function init(){
 
   /* shared chrome */
   try{await loadProds();}catch{}
+
+  /* ─── تازه‌سازی نشست ───
+     `me` در localStorage می‌ماند و تا امروز هیچ‌وقت به‌روز نمی‌شد. نتیجه:
+     فیلدهایی که پاسخ ورود نداشت (مثل termsAccepted) برای همیشه غلط
+     می‌ماندند و مودال قوانین سر هر خرید دوباره باز می‌شد. حتی خریدهای
+     تأییدشده هم در purchases منعکس نمی‌شدند.
+     یک درخواست سبک در شروع هر صفحه این را حل می‌کند و توکن مرده را هم
+     همان‌جا لو می‌دهد (۴۰۱ داخل api نشست را پاک می‌کند). */
+  if(token){
+    try{
+      const fresh=await api("GET","/auth/me");
+      me=fresh;localStorage.setItem("tb_me",JSON.stringify(me));
+    }catch(e){ if(e.status!==401)console.warn("session refresh failed",e.message); }
+  }
+
   renderNav();
   updateCartBadge();
 

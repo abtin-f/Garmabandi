@@ -1,0 +1,31 @@
+Fix three bugs found on the live site after the 2.1.0 rollout
+
+1) One purchase showed four rows. The old backend created a fresh order
+   every time the buy button was pressed, and those rows carry the
+   legacy status 'pending', which is not in OPEN_STATUSES — so the new
+   reuse logic never matched them and kept adding more. A startup
+   migration moves 'pending' to awaiting_payment (backfilling payAmount
+   and expiresAt) and collapses duplicate open orders per user+product,
+   keeping the one with a receipt, else the newest. The dashboard
+   dedupes too, as a belt-and-braces measure.
+
+2) Admin was stuck on those orders: the approve/reject buttons only
+   render for pending_review, so a legacy 'pending' order had no action
+   at all. Same migration fixes it; the admin card now also explains
+   itself when an order is simply waiting for the buyer's receipt.
+
+3) "توکن نامعتبر" and the terms modal reappearing had two causes:
+   - /auth/login never returned termsAccepted, and the frontend stores
+     `me` in localStorage and never refreshed it, so a user who accepted
+     the terms long ago saw the modal on every purchase, forever.
+     login, /auth/me and otp/verify now share one publicUser() shape.
+   - a 401 surfaced as a raw error with no recovery: the user still
+     looked signed in but nothing worked. api() now clears the session
+     and opens the login dialog, and init() refreshes `me` from
+     /auth/me on every page load, which also detects a dead token.
+
+12 regression tests added (52 total in dev-test-c2c.js); the dev server
+now seeds four legacy duplicate orders so the migration is covered.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01YHMyCE5EBKZz4BZUBZ8qQt
