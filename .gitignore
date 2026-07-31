@@ -10,6 +10,10 @@ backend/.env
 # Local database & user uploads
 db.json
 backend/uploads/
+# فیش‌های واریز کاربران — رسید بانکی است، هرگز کامیت نشود
+backend/receipts/
+# خروجی اجرای تست‌ها
+test-report.txt
 backend/tmp/
 
 # Logs

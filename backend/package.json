@@ -1,6 +1,6 @@
 {
   "name": "thermal-book-backend",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Backend for Thermal Insulation Book Sales Platform",
   "main": "server.js",
   "scripts": {

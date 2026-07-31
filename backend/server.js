@@ -126,6 +126,32 @@ const upload = multer({
      Image validation is done per-field below. */
 });
 
+/* ─── فیش‌های کارت‌به‌کارت ───
+   ⚠ عمداً در backend/receipts ذخیره می‌شوند، نه backend/uploads.
+   پوشه‌ی uploads به‌صورت استاتیک روی /uploads سرو می‌شود؛ اگر فیش آنجا
+   می‌رفت، هر کسی که آدرس فایل را حدس می‌زد رسید بانکی بقیه را می‌دید.
+   فیش فقط از مسیر احراز هویت‌شده‌ی /api/orders/receipt/:id خوانده می‌شود. */
+const RECEIPTS_DIR = path.join(__dirname, 'receipts');
+if (!fs.existsSync(RECEIPTS_DIR)) fs.mkdirSync(RECEIPTS_DIR, { recursive: true });
+/* سقف حجم فیش — همین‌جا تعریف می‌شود چون multer پایین‌تر بلافاصله
+   استفاده‌اش می‌کند و بقیه‌ی تنظیمات پرداخت بعد از این نقطه‌اند */
+const RECEIPT_MAX_BYTES = 2 * 1024 * 1024;
+
+const RECEIPT_EXT  = { 'image/jpeg': '.jpg', 'image/png': '.png', 'application/pdf': '.pdf' };
+const uploadReceipt = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => cb(null, RECEIPTS_DIR),
+    /* اسم اصلی فایل کاملاً دور ریخته می‌شود — پسوند از روی mimetype
+       تعیین می‌شود، نه از روی چیزی که کاربر فرستاده. */
+    filename: (req, file, cb) => cb(null, `rc_${uuidv4()}${RECEIPT_EXT[file.mimetype] || '.bin'}`),
+  }),
+  limits: { fileSize: RECEIPT_MAX_BYTES, files: 1 },
+  fileFilter: (req, file, cb) => {
+    if (!RECEIPT_EXT[file.mimetype]) return cb(new Error('فقط تصویر JPG/PNG یا فایل PDF مجاز است'));
+    cb(null, true);
+  },
+});
+
 const auth = async (req, res, next) => {
   const t = req.headers.authorization?.split(' ')[1];
   if (!t) return res.status(401).json({ error: 'توکن یافت نشد' });
@@ -231,6 +257,27 @@ const SMS_LINE_NUMBER = (process.env.SMS_LINE_NUMBER || '').trim();
    'line'   = ارسال از خط اختصاصی — فقط بعد از خدماتی‌سازی خط */
 const SMS_SEND_MODE   = (process.env.SMS_SEND_MODE || 'verify').trim().toLowerCase();
 
+/* ─── قالب‌های پیامکِ اطلاع‌رسانی سفارش ───
+   حالت پیش‌فرض ارسال، /send/verify است و متن آزاد قبول نمی‌کند — فقط
+   قالبِ تأییدشده در پنل sms.ir. پس هر پیام یک templateId جدا می‌خواهد.
+   اگر آی‌دی خالی بماند، پیام فقط در لاگ می‌نشیند و جریان کار متوقف
+   نمی‌شود؛ اطلاع‌رسانی هرگز نباید جلوی تأیید سفارش را بگیرد. */
+const SMS_TPL_ADMIN_RECEIPT = parseInt(process.env.SMS_TPL_ADMIN_RECEIPT || '0', 10);
+const SMS_TPL_ORDER_OK      = parseInt(process.env.SMS_TPL_ORDER_OK      || '0', 10);
+const SMS_TPL_ORDER_NO      = parseInt(process.env.SMS_TPL_ORDER_NO      || '0', 10);
+const ADMIN_ALERT_PHONE     = (process.env.ADMIN_ALERT_PHONE || '').trim();
+
+/* ═══ پرداخت کارت‌به‌کارت ═══ */
+const CARD_NUMBER = (process.env.CARD_NUMBER || '6037997569787815').replace(/\D/g, '');
+const CARD_HOLDER = (process.env.CARD_HOLDER || 'سحر نقوی').trim();
+const CARD_BANK   = (process.env.CARD_BANK   || 'بانک ملی ایران').trim();
+/* سفارشِ پرداخت‌نشده بعد از این مدت منقضی می‌شود (ساعت) */
+const ORDER_TTL_HOURS = Math.min(168, Math.max(1, parseInt(process.env.ORDER_TTL_HOURS || '24', 10) || 24));
+/* مهلتی که به کاربر اعلام می‌کنیم برای بررسی فیش (ساعت) — فقط متن UI */
+const REVIEW_SLA_HOURS = Math.min(72, Math.max(1, parseInt(process.env.REVIEW_SLA_HOURS || '12', 10) || 12));
+/* حداکثر سفارشِ باز (پرداخت‌نشده یا در انتظار بررسی) برای هر کاربر */
+const MAX_OPEN_ORDERS = 5;
+
 const otpStore    = new Map();   /* 'purpose:phone' → {code, exp, tries, sentAt, payload} */
 const otpHourly   = new Map();   /* phone → [timestamp, ...] */
 const resetTokens = new Map();   /* token → {phone, exp} */
@@ -329,6 +376,51 @@ async function sendOtpSms(phone, code) {
   }
   /* verify یک messageId می‌دهد، bulk آرایه‌ی messageIds */
   return { sent: true, messageId: d.data?.messageId ?? d.data?.messageIds?.[0] };
+}
+
+/* ─── پیامک اطلاع‌رسانی (غیر از کد تایید) ───
+   fire-and-forget: هیچ‌وقت await نمی‌شود و هیچ‌وقت throw نمی‌کند.
+   دلیلش این است که تأیید سفارش توسط ادمین نباید منتظر sms.ir بماند —
+   تحویل پیامک روی خط اشتراکی بین ۵۰ ثانیه تا چند دقیقه طول می‌کشد و
+   بستنِ پاسخِ HTTP به آن، پنل ادمین را بی‌دلیل کند می‌کند. */
+function notifySms(phone, templateId, params) {
+  const to = normalizePhone(phone);
+  if (!to || !SMS_API_KEY || !templateId) {
+    console.log(`📵 [SMS] ارسال نشد (تنظیم‌نشده) → ${phone}`, params);
+    return;
+  }
+  const body = {
+    mobile: to,
+    templateId,
+    parameters: Object.entries(params || {}).map(([name, value]) => ({
+      name,
+      /* sms.ir پارامتر چندخطی و طولانی را رد می‌کند */
+      value: String(value ?? '').replace(/\s+/g, ' ').slice(0, 80),
+    })),
+  };
+  fetch('https://api.sms.ir/v1/send/verify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'x-api-key': SMS_API_KEY },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout ? AbortSignal.timeout(12000) : undefined,
+  })
+    .then(r => r.json().catch(() => ({})))
+    .then(d => { if (d.status !== 1) console.error('❌ notifySms:', JSON.stringify(d)); })
+    .catch(e => console.error('❌ notifySms:', e.message));
+}
+
+/* ارقام فارسی/عربی → لاتین، و نرمال‌سازی شماره موبایل به شکل 09xxxxxxxxx */
+function toLatinDigits(s) {
+  return String(s ?? '')
+    .replace(/[۰-۹]/g, d => String(d.charCodeAt(0) - 0x06F0))
+    .replace(/[٠-٩]/g, d => String(d.charCodeAt(0) - 0x0660));
+}
+function normalizePhone(p) {
+  let s = toLatinDigits(p).replace(/\D/g, '');
+  if (s.startsWith('0098')) s = s.slice(4);
+  else if (s.startsWith('98') && s.length === 12) s = s.slice(2);
+  if (s.length === 10 && s.startsWith('9')) s = '0' + s;
+  return /^09\d{9}$/.test(s) ? s : '';
 }
 
 /* ─── ساخت و ارسال کد (مشترک بین ثبت‌نام و فراموشی رمز) ─── */
@@ -618,44 +710,216 @@ app.post('/api/search', async (req, res) => {
   }
 });
 
-// ORDERS
+/* ═══════════════════════════════════════════════════════════
+   سفارش و پرداخت کارت‌به‌کارت
+   ───────────────────────────────────────────────────────────
+   چرخه‌ی وضعیت — فقط به جلو:
+     awaiting_payment → pending_review → paid
+                      ↘ expired        ↘ rejected → pending_review
+
+   قواعدی که هرگز نباید شکسته شوند:
+   • مبلغ همیشه سمت سرور از روی محصول حساب می‌شود؛ هرچه کلاینت بفرستد
+     نادیده گرفته می‌شود.
+   • دسترسی دانلود فقط با گذاشتن productId در users.purchases باز می‌شود
+     و این کار فقط در approveOrder انجام می‌گیرد.
+   • trackingCode یکتاست (هم در کد، هم با ایندکس یکتای دیتابیس).
+═══════════════════════════════════════════════════════════ */
+const OPEN_STATUSES = ['awaiting_payment', 'pending_review', 'rejected'];
+
+/* قیمت واقعی محصول با اعمال تخفیف — تنها منبع معتبر مبلغ */
+function priceOf(product) {
+  const base = Math.max(0, Math.round(Number(product.price) || 0));
+  const d = Math.min(100, Math.max(0, Number(product.discount) || 0));
+  return d ? Math.round(base * (1 - d / 100)) : base;
+}
+
+/* ─── مبلغ یکتا ───
+   چند تومان تصادفی به مبلغ اضافه می‌شود تا هر واریز فقط به یک سفارش
+   بخورد. بدون این، اگر دو نفر هم‌زمان یک محصول را بخرند دو واریز با
+   مبلغ کاملاً یکسان می‌آید و تطبیق فیش با سفارش حدسی می‌شود.
+   فقط بین سفارش‌های «باز» یکتا نگه داشته می‌شود؛ سفارش‌های بسته
+   دیگر منتظر واریز نیستند و برخوردشان اهمیتی ندارد. */
+function uniquePayAmount(base) {
+  const taken = new Set(
+    db.get('orders').value()
+      .filter(o => OPEN_STATUSES.includes(o.status))
+      .map(o => o.payAmount)
+  );
+  for (let i = 0; i < 120; i++) {
+    const amt = base + crypto.randomInt(1, 100);   /* +۱ تا +۹۹ تومان */
+    if (!taken.has(amt)) return amt;
+  }
+  return base + crypto.randomInt(100, 1000);       /* بن‌بست نادر */
+}
+
+/* سفارش‌های پرداخت‌نشده‌ی از مهلت گذشته را منقضی می‌کند.
+   سفارشِ در انتظار بررسی هرگز منقضی نمی‌شود — کاربر پولش را داده و
+   تقصیر او نیست که ادمین دیر رسیده. */
+async function sweepExpiredOrders() {
+  const now = Date.now();
+  const stale = db.get('orders').value().filter(o =>
+    o.status === 'awaiting_payment' && o.expiresAt && new Date(o.expiresAt).getTime() < now);
+  for (const o of stale) {
+    await db.get('orders').find({ id: o.id }).assign({ status: 'expired' }).write();
+  }
+  return stale.length;
+}
+setInterval(() => { sweepExpiredOrders().catch(() => {}); }, 15 * 60_000).unref?.();
+
+/* اطلاعات کارت + مبلغ — چیزی که مودال پرداخت نشان می‌دهد */
+function payInfo(order) {
+  return {
+    orderId:    order.id,
+    amount:     order.amount,
+    payAmount:  order.payAmount,
+    cardNumber: CARD_NUMBER,
+    cardHolder: CARD_HOLDER,
+    cardBank:   CARD_BANK,
+    expiresAt:  order.expiresAt,
+    slaHours:   REVIEW_SLA_HOURS,
+    status:     order.status,
+  };
+}
+
 app.post('/api/orders/create', auth, async (req, res) => {
   const { productId } = req.body;
   const product = db.get('products').find({ id: productId }).value();
   if (!product) return res.status(404).json({ error: 'محصول یافت نشد' });
   const user = db.get('users').find({ id: req.user.id }).value();
-  if (user.purchases?.includes(productId)) return res.status(409).json({ error: 'قبلاً خریده‌اید' });
-  const disc = product.discount ? Math.round(product.price*(1-product.discount/100)) : product.price;
-  const order = { id: uuidv4(), userId: req.user.id, productId, productTitle: product.title, productType: product.type, amount: disc, status: 'pending', createdAt: new Date().toISOString() };
+  if (user.purchases?.includes(productId)) return res.status(409).json({ error: 'این محصول را قبلاً خریده‌اید' });
+
+  await sweepExpiredOrders();
+  const mine = db.get('orders').value().filter(o => o.userId === req.user.id);
+
+  /* اگر همین محصول سفارشِ بازِ در جریان دارد، همان را برگردان.
+     ساخت سفارش تازه یعنی یک مبلغ یکتای تازه — و کاربری که قبلاً مبلغ
+     قبلی را واریز کرده بود سرگردان می‌شود. */
+  const open = mine.find(o => o.productId === productId && OPEN_STATUSES.includes(o.status));
+  if (open) return res.json({ success: true, reused: true, ...payInfo(open), product: lightProduct(product) });
+
+  if (mine.filter(o => OPEN_STATUSES.includes(o.status)).length >= MAX_OPEN_ORDERS)
+    return res.status(429).json({ error: `حداکثر ${MAX_OPEN_ORDERS} سفارش باز می‌توانید داشته باشید — اول تکلیف سفارش‌های قبلی را روشن کنید` });
+
+  const amount = priceOf(product);
+  const order = {
+    id: uuidv4(),
+    userId: req.user.id,
+    productId,
+    productTitle: product.title,
+    productType: product.type,
+    amount,
+    payAmount: uniquePayAmount(amount),
+    status: 'awaiting_payment',
+    createdAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + ORDER_TTL_HOURS * 3600e3).toISOString(),
+  };
   await db.get('orders').push(order).write();
-  res.json({ success: true, orderId: order.id, amount: disc, product });
+  res.json({ success: true, ...payInfo(order), product: lightProduct(product) });
 });
 
-app.post('/api/orders/pay/:orderId', auth, async (req, res) => {
-  const order = db.get('orders').find({ id: req.params.orderId, userId: req.user.id }).value();
-  if (!order) return res.status(404).json({ error: 'سفارش یافت نشد' });
-  // Simulate occasional failures for demo
-  const simulateFail = req.body.simulateFail;
-  const status = simulateFail ? 'failed' : 'paid';
-  await db.get('orders').find({ id: req.params.orderId }).assign({ status, paidAt: new Date().toISOString(), paymentRef: status==='paid'?'SIM-'+Math.random().toString(36).substring(2,10).toUpperCase():null }).write();
-  if (status === 'paid') {
-    const u = db.get('users').find({ id: req.user.id }).value();
-    const purchases = Array.isArray(u.purchases) ? u.purchases.slice() : [];
-    if (!purchases.includes(order.productId)) purchases.push(order.productId);
-    await await db.get('users').find({ id: req.user.id }).assign({ purchases }).write();
-  }
-  res.json({ success: status==='paid', message: status==='paid'?'پرداخت موفق':'پرداخت ناموفق', productId: order.productId });
+/* مسیر قدیمیِ «پرداخت شبیه‌سازی‌شده» — بسته شد.
+   ⚠ این مسیر بدون هیچ پرداختی محصول را به حساب کاربر اضافه می‌کرد؛
+   یعنی هر کسی با یک درخواست ساده می‌توانست همه‌چیز را رایگان بگیرد. */
+app.post('/api/orders/pay/:orderId', auth, (req, res) => {
+  res.status(410).json({
+    error: 'پرداخت شبیه‌سازی‌شده حذف شده است — لطفاً کارت‌به‌کارت کنید و فیش را بارگذاری کنید',
+    code: 'USE_RECEIPT',
+  });
+});
+
+/* ─── بارگذاری فیش ─── */
+app.post('/api/orders/:id/receipt', auth, (req, res) => {
+  uploadReceipt.single('receipt')(req, res, async err => {
+    /* پاک‌کردن فایلِ نیمه‌آپلودشده وقتی اعتبارسنجی رد می‌شود */
+    const drop = () => { try { if (req.file) fs.unlinkSync(req.file.path); } catch {} };
+    if (err) {
+      drop();
+      const msg = err.code === 'LIMIT_FILE_SIZE'
+        ? `حجم فیش نباید بیشتر از ${Math.round(RECEIPT_MAX_BYTES / 1048576)} مگابایت باشد`
+        : (err.message || 'خطا در بارگذاری فیش');
+      return res.status(400).json({ error: msg });
+    }
+    try {
+      const order = db.get('orders').find({ id: req.params.id }).value();
+      if (!order || order.userId !== req.user.id) { drop(); return res.status(404).json({ error: 'سفارش یافت نشد' }); }
+      if (!['awaiting_payment', 'rejected'].includes(order.status)) {
+        drop();
+        const msg = order.status === 'pending_review' ? 'فیش این سفارش قبلاً ثبت شده و در حال بررسی است'
+                  : order.status === 'paid'           ? 'این سفارش قبلاً تأیید شده است'
+                  : 'این سفارش منقضی شده — دوباره سفارش بدهید';
+        return res.status(409).json({ error: msg });
+      }
+      if (order.status === 'awaiting_payment' && order.expiresAt && new Date(order.expiresAt) < new Date()) {
+        drop();
+        await db.get('orders').find({ id: order.id }).assign({ status: 'expired' }).write();
+        return res.status(410).json({ error: 'مهلت این سفارش تمام شده — دوباره سفارش بدهید' });
+      }
+      if (!req.file) return res.status(400).json({ error: 'تصویر فیش را بارگذاری کنید' });
+
+      const code = toLatinDigits(req.body.trackingCode).replace(/[^0-9A-Za-z-]/g, '').slice(0, 40);
+      if (code.length < 4) { drop(); return res.status(400).json({ error: 'کد پیگیری را درست وارد کنید (حداقل ۴ رقم)' }); }
+      /* یک فیش، یک سفارش. بدون این، یک نفر یک رسید را برای ده سفارش
+         بالا می‌فرستد و ادمین در نگاه اول متوجه نمی‌شود. */
+      const dup = db.get('orders').value().find(o => o.trackingCode === code && o.id !== order.id);
+      if (dup) { drop(); return res.status(409).json({ error: 'این کد پیگیری قبلاً برای سفارش دیگری ثبت شده است' }); }
+
+      /* فیش قبلی (در حالت ارسال دوباره بعد از رد شدن) پاک می‌شود */
+      if (order.receiptPath) {
+        try { fs.unlinkSync(path.join(RECEIPTS_DIR, path.basename(order.receiptPath))); } catch {}
+      }
+
+      await db.get('orders').find({ id: order.id }).assign({
+        status: 'pending_review',
+        receiptPath: req.file.filename,
+        trackingCode: code,
+        submittedAt: new Date().toISOString(),
+        rejectReason: null,
+      }).write();
+
+      const u = db.get('users').find({ id: req.user.id }).value();
+      notifySms(ADMIN_ALERT_PHONE, SMS_TPL_ADMIN_RECEIPT, {
+        NAME: `${u?.firstName || ''} ${u?.lastName || ''}`.trim() || u?.phone || '—',
+        AMOUNT: String(order.payAmount),
+      });
+
+      res.json({ success: true, status: 'pending_review', slaHours: REVIEW_SLA_HOURS });
+    } catch (e) {
+      drop();
+      console.error('receipt:', e);
+      res.status(500).json({ error: 'خطا در ثبت فیش' });
+    }
+  });
+});
+
+/* ─── نمایش فیش — فقط ادمین یا صاحب همان سفارش ─── */
+app.get('/api/orders/:id/receipt', auth, async (req, res) => {
+  const order = db.get('orders').find({ id: req.params.id }).value();
+  if (!order || !order.receiptPath) return res.status(404).json({ error: 'فیشی ثبت نشده' });
+  const me = db.get('users').find({ id: req.user.id }).value();
+  if (!me?.isAdmin && order.userId !== req.user.id) return res.status(403).json({ error: 'دسترسی ندارید' });
+  /* basename جلوی path traversal از راه مقدار ذخیره‌شده را می‌گیرد */
+  const abs = path.join(RECEIPTS_DIR, path.basename(order.receiptPath));
+  if (!fs.existsSync(abs)) return res.status(404).json({ error: 'فایل فیش پیدا نشد' });
+  const ext = path.extname(abs).toLowerCase();
+  res.setHeader('Content-Type', ext === '.pdf' ? 'application/pdf' : ext === '.png' ? 'image/png' : 'image/jpeg');
+  res.setHeader('Cache-Control', 'private, max-age=300');
+  fs.createReadStream(abs).pipe(res);
 });
 
 app.get('/api/orders/my', auth, async (req, res) => {
-  const orders = db.get('orders').filter({ userId: req.user.id, status: 'paid' }).value();
-  /* Fix 3: chronological — most recent purchase first (descending) */
-  const sorted = [...orders].sort((a, b) => {
-    const ta = new Date(a.paidAt || a.createdAt || 0).getTime();
-    const tb = new Date(b.paidAt || b.createdAt || 0).getTime();
-    return tb - ta;
-  });
-  res.json(sorted.map(o => ({ ...o, product: lightProduct(db.get('products').find({ id: o.productId }).value()) })));
+  await sweepExpiredOrders();
+  const orders = db.get('orders').value().filter(o => o.userId === req.user.id);
+  const sorted = [...orders].sort((a, b) =>
+    new Date(b.paidAt || b.submittedAt || b.createdAt || 0) - new Date(a.paidAt || a.submittedAt || a.createdAt || 0));
+  res.json(sorted.map(o => ({
+    ...o,
+    /* قفلِ دانلود سمت سرور تعیین می‌شود، نه سمت کلاینت */
+    unlocked: o.status === 'paid',
+    cardNumber: o.status === 'awaiting_payment' || o.status === 'rejected' ? CARD_NUMBER : undefined,
+    cardHolder: o.status === 'awaiting_payment' || o.status === 'rejected' ? CARD_HOLDER : undefined,
+    slaHours: REVIEW_SLA_HOURS,
+    product: lightProduct(db.get('products').find({ id: o.productId }).value()),
+  })));
 });
 
 // ─── TERMS ACCEPTANCE ───
@@ -916,8 +1180,8 @@ function topSellingProduct() {
 app.get('/api/admin/stats', adminAuth, async (req, res) => {
   const allOrders = db.get('orders').value();
   const paidAll = allOrders.filter(o => o.status==='paid');
-  const failed = allOrders.filter(o => o.status==='failed');
-  const pending = allOrders.filter(o => o.status==='pending');
+  const failed = allOrders.filter(o => o.status==='rejected' || o.status==='failed');
+  const pending = allOrders.filter(o => o.status==='pending_review');
   /* revenue respects the reset marker; order counts do not */
   const resetAt = revenueResetAt();
   const paidRev = resetAt ? paidAll.filter(o => o.paidAt && new Date(o.paidAt) >= resetAt) : paidAll;
@@ -990,10 +1254,70 @@ app.put('/api/admin/maintenance', adminAuth, async (req, res) => {
 });
 
 app.get('/api/admin/orders', adminAuth, async (req, res) => {
+  await sweepExpiredOrders();
   const { status } = req.query;
-  let orders = db.get('orders').value().slice(-100).reverse();
+  /* سفارش‌های در انتظار بررسی همیشه اول می‌آیند — کاری که ادمین باید
+     انجام دهد نباید زیر ۱۰۰ سفارش قدیمی گم شود. */
+  const all = db.get('orders').value();
+  const pending = all.filter(o => o.status === 'pending_review');
+  const rest = all.filter(o => o.status !== 'pending_review').slice(-150).reverse();
+  let orders = [...pending.reverse(), ...rest];
   if (status && status !== 'all') orders = orders.filter(o => o.status === status);
-  res.json(orders.map(o => ({...o, userPhone: db.get('users').find({id:o.userId}).value()?.phone, userName: (() => { const u = db.get('users').find({id:o.userId}).value(); return u ? (`${u.firstName||''} ${u.lastName||''}`.trim()||u.phone) : '—'; })() })));
+  res.json(orders.map(o => {
+    const u = db.get('users').find({ id: o.userId }).value();
+    return {
+      ...o,
+      userPhone: u?.phone,
+      userName: u ? (`${u.firstName || ''} ${u.lastName || ''}`.trim() || u.phone) : '—',
+      hasReceipt: !!o.receiptPath,
+    };
+  }));
+});
+
+/* ─── تأیید فیش ───
+   تنها جایی در کل برنامه که productId وارد users.purchases می‌شود. */
+app.post('/api/admin/orders/:id/approve', adminAuth, async (req, res) => {
+  const order = db.get('orders').find({ id: req.params.id }).value();
+  if (!order) return res.status(404).json({ error: 'سفارش یافت نشد' });
+  if (order.status === 'paid') return res.status(409).json({ error: 'این سفارش قبلاً تأیید شده است' });
+  if (order.status !== 'pending_review')
+    return res.status(409).json({ error: 'فقط سفارشی که فیش دارد قابل تأیید است' });
+
+  const now = new Date().toISOString();
+  await db.get('orders').find({ id: order.id }).assign({
+    status: 'paid', paidAt: now, reviewedAt: now, reviewedBy: req.user.id,
+    rejectReason: null, paymentRef: 'C2C-' + (order.trackingCode || order.id.slice(0, 8)),
+  }).write();
+
+  const u = db.get('users').find({ id: order.userId }).value();
+  const purchases = Array.isArray(u?.purchases) ? u.purchases.slice() : [];
+  if (!purchases.includes(order.productId)) purchases.push(order.productId);
+  await db.get('users').find({ id: order.userId }).assign({ purchases }).write();
+
+  notifySms(u?.phone, SMS_TPL_ORDER_OK, { TITLE: order.productTitle || 'سفارش شما' });
+  res.json({ success: true, status: 'paid' });
+});
+
+/* ─── رد فیش ─── */
+app.post('/api/admin/orders/:id/reject', adminAuth, async (req, res) => {
+  const order = db.get('orders').find({ id: req.params.id }).value();
+  if (!order) return res.status(404).json({ error: 'سفارش یافت نشد' });
+  if (order.status === 'paid')
+    return res.status(409).json({ error: 'سفارش تأییدشده را نمی‌توان رد کرد' });
+  if (order.status !== 'pending_review')
+    return res.status(409).json({ error: 'فقط سفارشی که فیش دارد قابل رد است' });
+
+  const reason = sanitizeMsg(req.body.reason, 400).trim();
+  if (reason.length < 3) return res.status(400).json({ error: 'دلیل رد را بنویسید' });
+
+  const now = new Date().toISOString();
+  await db.get('orders').find({ id: order.id }).assign({
+    status: 'rejected', rejectReason: reason, reviewedAt: now, reviewedBy: req.user.id,
+  }).write();
+
+  const u = db.get('users').find({ id: order.userId }).value();
+  notifySms(u?.phone, SMS_TPL_ORDER_NO, { TITLE: order.productTitle || 'سفارش شما' });
+  res.json({ success: true, status: 'rejected' });
 });
 
 app.get('/api/admin/users', adminAuth, async (req, res) => {

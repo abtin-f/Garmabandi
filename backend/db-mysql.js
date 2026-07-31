@@ -32,6 +32,25 @@ const JSON_FIELDS = {
 const AUTO_COLUMNS = {
   tickets: [['messages', 'LONGTEXT']],
   users:   [['phoneVerified', 'TINYINT(1) NOT NULL DEFAULT 0']],
+  /* پرداخت کارت‌به‌کارت — ستون‌های سفارش
+     trackingCode یکتاست: جلوی استفاده‌ی دوباره از یک فیش برای چند سفارش
+     را می‌گیرد. UNIQUE روی ستونِ nullable در MySQL چند NULL را می‌پذیرد،
+     پس سفارش‌های بدون فیش مشکلی ایجاد نمی‌کنند. */
+  orders:  [
+    ['productType',  "VARCHAR(20) DEFAULT ''"],
+    ['payAmount',    'INT DEFAULT 0'],
+    ['receiptPath',  'VARCHAR(255) DEFAULT NULL'],
+    ['trackingCode', 'VARCHAR(64) DEFAULT NULL'],
+    ['submittedAt',  'VARCHAR(40) DEFAULT NULL'],
+    ['reviewedAt',   'VARCHAR(40) DEFAULT NULL'],
+    ['reviewedBy',   'VARCHAR(40) DEFAULT NULL'],
+    ['rejectReason', 'VARCHAR(500) DEFAULT NULL'],
+    ['expiresAt',    'VARCHAR(40) DEFAULT NULL'],
+  ],
+};
+/* ایندکس‌های یکتا که بعد از ساخت ستون‌ها اعمال می‌شوند */
+const AUTO_INDEXES = {
+  orders: [['uniq_orders_tracking', 'UNIQUE (`trackingCode`)']],
 };
 /* ستون‌های boolean (در MySQL به‌صورت 0/1) */
 const BOOL_FIELDS = {
@@ -105,6 +124,19 @@ async function init(config) {
           console.log(`🛠  ستون '${col}' به جدول '${t}' اضافه شد`);
         } catch (e) { /* اگر ستون از قبل بود یا خطا داد، نادیده بگیر */ }
       }
+    }
+    /* ایندکس‌های یکتا — اگر از قبل باشند خطا می‌دهد و نادیده گرفته می‌شود */
+    for (const [name, def] of (AUTO_INDEXES[t] || [])) {
+      try {
+        const [idx] = await pool.query(
+          `SELECT 1 FROM INFORMATION_SCHEMA.STATISTICS
+           WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND INDEX_NAME = ? LIMIT 1`,
+          [t, name]);
+        if (!idx.length) {
+          await pool.query(`ALTER TABLE \`${t}\` ADD CONSTRAINT \`${name}\` ${def}`);
+          console.log(`🛠  ایندکس یکتای '${name}' روی '${t}' ساخته شد`);
+        }
+      } catch (e) { console.warn(`⚠ ایندکس '${name}' ساخته نشد:`, e.message); }
     }
     const [rows] = await pool.query(`SELECT * FROM \`${t}\``);
     cache[t] = rows.map(r => decodeRow(t, r));

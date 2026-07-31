@@ -577,24 +577,15 @@ async function payCart(){
   doCheckoutPayment();
 }
 
-/* Runs the actual payment loop (called after terms are accepted) */
+/* سبد را یکی‌یکی وارد جریان پرداخت کارت‌به‌کارت می‌کند.
+   هر محصول مبلغ یکتای خودش را دارد، پس نمی‌شود همه را یک‌جا واریز کرد. */
 async function doCheckoutPayment(){
   const btn=document.getElementById("choPayBtn");
-  if(btn){btn.disabled=true;btn.textContent="در حال پردازش...";}
-  let paid=0;
-  for(const it of cart){
-    try{
-      const o=await api("POST","/orders/create",{productId:it.id});
-      await api("POST",`/orders/pay/${o.orderId}`);
-      if(!me.purchases)me.purchases=[];
-      me.purchases.push(it.id);paid++;
-    }catch{}
-  }
-  localStorage.setItem("tb_me",JSON.stringify(me));
-  cart=[];saveCart();updateCartBadge();
-  if(btn){btn.disabled=false;btn.textContent="پرداخت و دانلود همه موارد";}
-  if(paid>0){toast(`${ic('check',16)} ${paid} محصول خریداری شد!`,"ok");setTimeout(()=>go("dash"),1200);}
-  else toast("خطا در پرداخت","err");
+  if(btn){btn.disabled=true;btn.textContent="در حال آماده‌سازی…";}
+  try{
+    await startPayment(cart.map(x=>x.id));
+  }catch(e){toast(e.message||"خطا در ثبت سفارش","err");}
+  finally{if(btn){btn.disabled=false;btn.textContent="ادامه و پرداخت";}}
 }
 
 /* ─── LEGAL ACCEPTANCE MODAL ─── */
@@ -610,8 +601,10 @@ async function acceptTerms(){
     if(me){me.termsAccepted=true;me.termsAcceptedAt=r.termsAcceptedAt;localStorage.setItem("tb_me",JSON.stringify(me));}
     closeOvl("legalOvl");
     toast("قوانین پذیرفته شد","ok");
-    /* continue the purchase the user was making */
-    if(cart.length)doCheckoutPayment();
+    /* خریدی که کاربر وسطش بود ادامه پیدا می‌کند:
+       یا خرید مستقیم یک محصول (pendLegal) یا کل سبد */
+    if(pendLegal){const f=pendLegal;pendLegal=null;f();}
+    else if(cart.length)doCheckoutPayment();
   }catch(e){
     toast(e.message||"خطا در ثبت","err");
   }finally{
@@ -1016,7 +1009,191 @@ async function subRev(pid){if(!selRating){toast("امتیاز را انتخاب 
 
 /* BUY DIRECT */
 function buyProduct(id){if(!me){pendBuy=id;openAuth("login");toast("برای خرید وارد شوید","nfo");return;}const p=allProds.find(x=>x.id===id);if(!p)return;if(me.purchases?.includes(id)){toast("قبلاً خریده‌اید ","nfo");return;}const disc=p.discount?Math.round(p.price*(1-p.discount/100)):p.price;document.getElementById("buyTit").textContent=p.title;document.getElementById("buyDs").textContent=p.description||"";document.getElementById("buyPr").textContent=disc.toLocaleString();document.getElementById("buyOvl").dataset.pid=id;document.getElementById("buyOvl").classList.add("on");}
-async function doPay(){const pid=document.getElementById("buyOvl").dataset.pid;const btn=document.getElementById("btnBuy");btn.disabled=true;btn.textContent="...";try{const o=await api("POST","/orders/create",{productId:pid});await api("POST",`/orders/pay/${o.orderId}`);if(!me.purchases)me.purchases=[];me.purchases.push(pid);localStorage.setItem("tb_me",JSON.stringify(me));closeOvl("buyOvl");toast("خرید موفق!","ok");}catch(e){toast(e.message,"err");}finally{btn.disabled=false;btn.textContent="پرداخت و دانلود";}}
+async function doPay(){
+  const pid=document.getElementById("buyOvl").dataset.pid;
+  const btn=document.getElementById("btnBuy");
+  btn.disabled=true;btn.textContent="در حال آماده‌سازی…";
+  try{
+    if(!me.termsAccepted){closeOvl("buyOvl");openLegalModal();pendLegal=()=>startPayment([pid]);return;}
+    closeOvl("buyOvl");
+    await startPayment([pid]);
+  }catch(e){toast(e.message,"err");}
+  finally{btn.disabled=false;btn.textContent="ادامه و پرداخت";}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   پرداخت کارت‌به‌کارت
+   ───────────────────────────────────────────────────────────
+   مودال در زمان اجرا ساخته می‌شود تا لازم نباشد همین مارک‌آپ در
+   ۹ فایل HTML تکرار شود (همان الگوی authExtras).
+═══════════════════════════════════════════════════════════ */
+let payQueue=[];      /* شناسه‌ی محصولاتی که باید پرداخت شوند */
+let payCurrent=null;  /* اطلاعات سفارش جاری از سرور */
+let payFile=null;     /* فایل فیش انتخاب‌شده */
+let pendLegal=null;   /* کاری که بعد از پذیرش قوانین باید انجام شود */
+
+function payExtras(){
+  if(document.getElementById("payOvl"))return;
+  const d=document.createElement("div");
+  d.className="ovl";d.id="payOvl";
+  d.innerHTML=`<div class="mdl pay-mdl">
+    <button class="mdl-x" onclick="closePay()"><i class="ico-slot" data-ic="x"></i></button>
+    <div class="pay-hd">
+      <div class="pay-hd-ico"><i class="ico-slot" data-ic="credit-card" data-sz="20"></i></div>
+      <h2>پرداخت کارت‌به‌کارت</h2>
+      <p class="pay-hd-sub" id="payProdNm">—</p>
+    </div>
+
+    <div class="pay-card">
+      <div class="pay-card-bank" id="payBank">—</div>
+      <button type="button" class="pay-num" id="payNum" onclick="payCopy('num')" title="کپی شماره کارت">
+        <span id="payNumTxt">—</span>
+        <i class="ico-slot" data-ic="copy" data-sz="15"></i>
+      </button>
+      <div class="pay-card-holder"><span>به نام</span><strong id="payHolder">—</strong></div>
+    </div>
+
+    <button type="button" class="pay-amt" onclick="payCopy('amt')" title="کپی مبلغ">
+      <span class="pay-amt-lbl">مبلغ دقیق واریز</span>
+      <span class="pay-amt-val"><strong id="payAmtTxt">—</strong> تومان <i class="ico-slot" data-ic="copy" data-sz="14"></i></span>
+    </button>
+    <p class="pay-amt-note">مبلغ را <b>دقیقاً</b> همین‌قدر واریز کنید — چند تومان آخر شناسه‌ی سفارش شماست و بدون آن، فیش شما قابل تشخیص نیست.</p>
+
+    <div class="pay-drop" id="payDrop" onclick="document.getElementById('payFileInp').click()">
+      <input type="file" id="payFileInp" accept="image/jpeg,image/png,application/pdf" hidden onchange="payPick(event)">
+      <div class="pay-drop-empty" id="payDropEmpty">
+        <i class="ico-slot" data-ic="upload" data-sz="20"></i>
+        <span>تصویر فیش را انتخاب کنید</span>
+        <small>JPG، PNG یا PDF — حداکثر ۲ مگابایت</small>
+      </div>
+      <div class="pay-drop-picked" id="payDropPicked" style="display:none">
+        <img id="payPrev" alt="پیش‌نمایش فیش">
+        <div class="pay-drop-info"><span id="payFileNm"></span><small id="payFileSz"></small></div>
+        <button type="button" class="pay-drop-x" onclick="payClearFile(event)"><i class="ico-slot" data-ic="x" data-sz="14"></i></button>
+      </div>
+    </div>
+
+    <div class="fld pay-fld"><label>کد پیگیری / شماره ارجاع تراکنش</label>
+      <input id="payTrack" inputmode="numeric" placeholder="کد پیگیری را از رسید بانکی وارد کنید" maxlength="40"></div>
+
+    <div class="pay-err" id="payErr" style="display:none"></div>
+    <button class="pay-submit" id="paySubmit" onclick="paySubmit()"><i class="ico-slot" data-ic="check" data-sz="16"></i> ثبت فیش و ارسال برای بررسی</button>
+    <p class="pay-foot" id="payFoot">پس از تأیید فیش، فایل در پنل کاربری شما فعال می‌شود.</p>
+  </div>`;
+  document.body.appendChild(d);
+}
+
+/* سفارش می‌سازد و مودال پرداخت را باز می‌کند */
+async function startPayment(productIds){
+  payExtras();
+  payQueue=productIds.slice();
+  await payNext();
+}
+async function payNext(){
+  if(!payQueue.length){
+    closePay();
+    toast("فیش‌ها ثبت شد — پس از تأیید، فایل‌ها فعال می‌شوند","ok");
+    setTimeout(()=>go("dash"),900);
+    return;
+  }
+  const pid=payQueue[0];
+  try{
+    const o=await api("POST","/orders/create",{productId:pid});
+    payOpen(o);
+  }catch(e){
+    toast(e.message||"خطا در ثبت سفارش","err");
+    payQueue.shift();
+    if(payQueue.length)await payNext(); else closePay();
+  }
+}
+
+function payOpen(o){
+  payExtras();
+  payCurrent=o;payFile=null;
+  document.getElementById("payProdNm").textContent=o.product?.title||"";
+  document.getElementById("payBank").textContent=o.cardBank||"";
+  document.getElementById("payHolder").textContent=o.cardHolder||"";
+  /* شماره کارت چهارتایی نمایش داده می‌شود ولی چیزی که کپی می‌شود بدون فاصله است */
+  document.getElementById("payNumTxt").textContent=(o.cardNumber||"").replace(/(\d{4})(?=\d)/g,"$1 ");
+  document.getElementById("payAmtTxt").textContent=(o.payAmount||0).toLocaleString("fa-IR");
+  document.getElementById("payFoot").textContent=`پس از تأیید فیش (معمولاً کمتر از ${(o.slaHours||12).toLocaleString("fa-IR")} ساعت) فایل در پنل کاربری شما فعال می‌شود.`;
+  document.getElementById("payTrack").value="";
+  payClearFile();
+  payErrHide();
+  document.getElementById("payOvl").classList.add("on");
+  if(typeof hydrateIcons==="function")hydrateIcons(document.getElementById("payOvl"));
+}
+function closePay(){const el=document.getElementById("payOvl");if(el)el.classList.remove("on");payCurrent=null;payFile=null;}
+
+function payCopy(what){
+  if(!payCurrent)return;
+  const txt=what==="num"?String(payCurrent.cardNumber||""):String(payCurrent.payAmount||"");
+  const done=()=>toast(what==="num"?"شماره کارت کپی شد":"مبلغ کپی شد","ok");
+  if(navigator.clipboard?.writeText){navigator.clipboard.writeText(txt).then(done).catch(()=>payCopyFallback(txt,done));}
+  else payCopyFallback(txt,done);
+}
+/* مرورگرهای قدیمی و صفحات بدون HTTPS به clipboard API دسترسی ندارند */
+function payCopyFallback(txt,done){
+  const ta=document.createElement("textarea");
+  ta.value=txt;ta.style.cssText="position:fixed;opacity:0";
+  document.body.appendChild(ta);ta.select();
+  try{document.execCommand("copy");done();}catch{toast("کپی نشد — دستی یادداشت کنید","err");}
+  ta.remove();
+}
+
+function payErr(msg){const e=document.getElementById("payErr");if(!e)return;e.textContent=msg;e.style.display="block";}
+function payErrHide(){const e=document.getElementById("payErr");if(e)e.style.display="none";}
+
+function payPick(ev){
+  const f=ev.target.files&&ev.target.files[0];
+  if(!f)return;
+  /* همین بررسی‌ها سمت سرور هم انجام می‌شود — این فقط برای این است که
+     کاربر قبل از آپلود ۲ مگابایتی خطا را ببیند */
+  if(!["image/jpeg","image/png","application/pdf"].includes(f.type)){payErr("فقط JPG، PNG یا PDF");ev.target.value="";return;}
+  if(f.size>2*1048576){payErr("حجم فیش باید کمتر از ۲ مگابایت باشد");ev.target.value="";return;}
+  payErrHide();
+  payFile=f;
+  document.getElementById("payDropEmpty").style.display="none";
+  const pk=document.getElementById("payDropPicked");pk.style.display="flex";
+  document.getElementById("payFileNm").textContent=f.name;
+  document.getElementById("payFileSz").textContent=(f.size/1024).toFixed(0)+" کیلوبایت";
+  const img=document.getElementById("payPrev");
+  if(f.type==="application/pdf"){img.style.display="none";}
+  else{img.style.display="block";img.src=URL.createObjectURL(f);}
+}
+function payClearFile(ev){
+  if(ev)ev.stopPropagation();
+  payFile=null;
+  const inp=document.getElementById("payFileInp");if(inp)inp.value="";
+  const e=document.getElementById("payDropEmpty");if(e)e.style.display="flex";
+  const p=document.getElementById("payDropPicked");if(p)p.style.display="none";
+}
+
+async function paySubmit(){
+  if(!payCurrent)return;
+  const track=document.getElementById("payTrack").value.trim();
+  if(!payFile){payErr("تصویر فیش را بارگذاری کنید");return;}
+  if(track.replace(/\D/g,"").length<4){payErr("کد پیگیری را از رسید بانکی وارد کنید");return;}
+  payErrHide();
+  const btn=document.getElementById("paySubmit");
+  btn.disabled=true;btn.textContent="در حال ارسال…";
+  try{
+    const fd=new FormData();
+    fd.append("receipt",payFile);
+    fd.append("trackingCode",track);
+    const r=await fetch(API+"/orders/"+encodeURIComponent(payCurrent.orderId)+"/receipt",{
+      method:"POST",headers:{"Authorization":"Bearer "+token},body:fd});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(d.error||"خطا در ثبت فیش");
+    /* محصول از سبد حذف می‌شود ولی به purchases اضافه نمی‌شود —
+       دسترسی فقط با تأیید ادمین باز می‌شود. */
+    cart=cart.filter(x=>x.id!==payCurrent.product?.id&&x.id!==payQueue[0]);
+    saveCart();updateCartBadge();
+    payQueue.shift();
+    await payNext();
+  }catch(e){payErr(e.message||"خطا در ثبت فیش");}
+  finally{btn.disabled=false;btn.innerHTML=ic("check",16)+" ثبت فیش و ارسال برای بررسی";}
+}
 
 /* QR — SIMPLIFIED
    ───────────────────────────────────────────────────────────
@@ -1225,15 +1402,58 @@ async function loadDash(){
   document.getElementById("pfPh").value=me.phone;document.getElementById("pfCnt").textContent=(me.purchases||[]).length+" محصول";
   document.getElementById("pfDt").value=me.createdAt?new Date(me.createdAt).toLocaleDateString("fa-IR"):"—";
   try{let orders=await api("GET","/orders/my");
-    /* Fix 3: ensure newest-first even for legacy orders */
-    orders=[...orders].sort((a,b)=>new Date(b.paidAt||b.createdAt||0)-new Date(a.paidAt||a.createdAt||0));
-    document.getElementById("pfCnt").textContent=orders.length+" محصول";const pl=document.getElementById("puList");
+    orders=orders.filter(o=>o.status!=="expired");
+    const paidCount=orders.filter(o=>o.unlocked).length;
+    document.getElementById("pfCnt").textContent=paidCount+" محصول";const pl=document.getElementById("puList");
     if(!orders.length)pl.innerHTML=`<div class="empty"><div class="empty-i">${ic('package',16)}</div><p>هنوز خریدی نداشته‌اید<br><span style="color:var(--gold);cursor:pointer" onclick="go('shop')">به فروشگاه بروید</span></p></div>`;
-    else{pl.innerHTML=orders.map(o=>`<div class="pi"><div class="pi-ico">${ic(TI[o.product?.type]||"file-text",16)}</div><div class="pi-inf"><div class="pi-nm">${o.product?.title||o.productTitle}</div><div class="pi-mt">${o.product?.description||""}</div><div class="pi-mt" style="color:var(--faint)">${o.paidAt?new Date(o.paidAt).toLocaleDateString("fa-IR"):""}</div></div><div class="pi-r"><span class="pi-st">${ic('check',16)} پرداخت شده</span><button class="pi-dl" onclick="downloadProduct('${o.productId}','${(o.product?.title||o.productTitle||'').replace(/'/g,'')}','${(o.product?.fileName||'').replace(/'/g,'')}')">${ic('download',16)} دانلود</button></div></div>`).join("");
+    else{pl.innerHTML=orders.map(o=>orderRow(o)).join("");
       try{const recs=await api("GET","/recommendations");if(recs.length){document.getElementById("recsBoxW").style.display="block";document.getElementById("recsRow").innerHTML=recs.slice(0,6).map(p=>`<div class="rc"><div class="rc-ico">${ic(TI[p.type]||"file-text",16)}</div><div class="rc-nm">${p.title}</div><div class="rc-pr">${p.price.toLocaleString()} ت</div><button class="rc-b" onclick="buyProduct('${p.id}')">خرید</button></div>`).join("");}}catch{}}}
   catch(e){document.getElementById("puList").innerHTML=`<div class="empty"><div class="empty-i">${ic('alert',16)}</div><p>${e.message}</p></div>`;}
   try{const recs=await api("GET","/recommendations");document.getElementById("recsGrid").innerHTML=recs.length?recs.map(p=>prodCard(p)).join(""):`<div class="empty" style="grid-column:1/-1"><div class="empty-i">${ic('target',16)}</div><p>بعد از خرید اول نمایش داده می‌شود</p></div>`;}catch{}
 }
+/* ─── یک ردیف در «خریدهای من» ───
+   دکمه‌ی دانلود فقط وقتی ساخته می‌شود که سرور unlocked=true داده باشد.
+   این فقط لایه‌ی نمایش است؛ قفل واقعی سمت سرور در /api/download است. */
+const ORD_ST={
+  paid:            {cls:"ok",  txt:"تأیید شده",         ico:"check"},
+  pending_review:  {cls:"wait",txt:"در انتظار بررسی فیش",ico:"clock"},
+  awaiting_payment:{cls:"pend",txt:"در انتظار پرداخت",   ico:"credit-card"},
+  rejected:        {cls:"bad", txt:"رد شده",             ico:"alert"},
+};
+function orderRow(o){
+  const st=ORD_ST[o.status]||ORD_ST.pending_review;
+  const title=escHtml(o.product?.title||o.productTitle||"");
+  const when=o.paidAt||o.submittedAt||o.createdAt;
+  let action="";
+  if(o.status==="paid"){
+    action=`<button class="pi-dl" onclick="downloadProduct('${o.productId}','${(o.product?.title||o.productTitle||'').replace(/'/g,'')}','${(o.product?.fileName||'').replace(/'/g,'')}')">${ic('download',16)} دانلود</button>`;
+  }else if(o.status==="awaiting_payment"){
+    action=`<button class="pi-dl pi-pay" onclick="startPayment(['${o.productId}'])">${ic('credit-card',16)} پرداخت</button>`;
+  }else if(o.status==="rejected"){
+    action=`<button class="pi-dl pi-pay" onclick="startPayment(['${o.productId}'])">${ic('upload',16)} ارسال دوباره فیش</button>`;
+  }else{
+    action=`<span class="pi-lock">${ic('lock',16)} قفل تا تأیید</span>`;
+  }
+  const note=o.status==="rejected"&&o.rejectReason
+    ? `<div class="pi-reject">${ic('alert',14)} دلیل رد: ${escHtml(o.rejectReason)}</div>`
+    : o.status==="pending_review"
+      ? `<div class="pi-note">فیش شما ثبت شد و در حال بررسی است — معمولاً کمتر از ${(o.slaHours||12).toLocaleString("fa-IR")} ساعت.</div>`
+      : "";
+  return `<div class="pi pi-${st.cls}">
+    <div class="pi-ico">${ic(TI[o.product?.type]||"file-text",16)}</div>
+    <div class="pi-inf">
+      <div class="pi-nm">${title}</div>
+      <div class="pi-mt">${escHtml(o.product?.description||"")}</div>
+      <div class="pi-mt" style="color:var(--faint)">${when?new Date(when).toLocaleDateString("fa-IR"):""}</div>
+      ${note}
+    </div>
+    <div class="pi-r">
+      <span class="pi-st pi-st-${st.cls}">${ic(st.ico,16)} ${st.txt}</span>
+      ${action}
+    </div>
+  </div>`;
+}
+
 async function savePro(){const fn=document.getElementById("pfFn").value.trim(),ln=document.getElementById("pfLn").value.trim();
   const nv=validateName(fn,ln);if(!nv.ok){toast(nv.msg,"err");return;}
   try{await api("PUT","/auth/profile",{firstName:fn,lastName:ln});me.firstName=fn;me.lastName=ln;localStorage.setItem("tb_me",JSON.stringify(me));renderNav();toast(" ذخیره شد","ok");}catch(e){toast(e.message,"err");}}

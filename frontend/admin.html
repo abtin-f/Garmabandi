@@ -294,6 +294,19 @@ button,input,select,textarea{font-family:var(--f)}
 .failed-stag{background:rgba(214,53,53,.1);color:var(--red)}
 .pending-stag{background:rgba(224,112,32,.1);color:var(--orange)}
 .ord-date{font-size:11px;color:var(--faint)}
+/* ─── بررسی فیش کارت‌به‌کارت ─── */
+.ord-card.issue{border-color:rgba(224,112,32,.18);background:rgba(224,112,32,.03)}
+.ord-card.needs-review{border-color:rgba(212,146,10,.4);background:rgba(212,146,10,.05)}
+.ord-reason{font-size:11px;color:var(--red);margin-top:4px;line-height:1.7}
+.ord-actions{display:flex;gap:7px;margin-top:.7rem;flex-wrap:wrap}
+.ord-b{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:8px;
+  font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;border:1px solid transparent;transition:filter .15s}
+.ord-b:hover{filter:brightness(1.12)}
+.ord-b-view{background:var(--bg2);border-color:var(--rim3);color:var(--text)}
+.ord-b-ok{background:linear-gradient(145deg,#1aa06e,#14855a);color:#fff}
+.ord-b-no{background:linear-gradient(145deg,#d63535,#b02a2a);color:#fff}
+.ord-noreceipt{font-size:11.5px;color:var(--red);align-self:center}
+.rc-mdl{max-width:min(720px,94vw)}
 .retry-btn{padding:4px 10px;background:rgba(214,53,53,.1);border:1px solid rgba(214,53,53,.2);color:var(--red);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s}
 .retry-btn:hover{background:var(--red);color:#fff}
 
@@ -1044,9 +1057,30 @@ button,input,select,textarea{font-family:var(--f)}
         <button class="oft on" onclick="setOF(this,'all')">همه <span class="ord-cnt-badge" id="ocAll"></span></button>
         <button class="oft" onclick="setOF(this,'paid')"><i class="ico-slot" data-ic="check-circle"></i> پرداخت شده <span class="ord-cnt-badge" id="ocPaid"></span></button>
         <button class="oft fail-tab" onclick="setOF(this,'failed')"><i class="ico-slot" data-ic="x-circle"></i> ناموفق <span class="ord-cnt-badge" id="ocFail" style="background:rgba(214,53,53,.2)"></span></button>
-        <button class="oft pend-tab" onclick="setOF(this,'pending')">⏳ در انتظار <span class="ord-cnt-badge" id="ocPend" style="background:rgba(224,112,32,.2)"></span></button>
+        <button class="oft pend-tab" onclick="setOF(this,'pending_review')"><i class="ico-slot" data-ic="clock"></i> در انتظار بررسی <span class="ord-cnt-badge" id="ocPend" style="background:rgba(224,112,32,.2)"></span></button>
       </div>
       <div class="ord-items" id="ordList"></div>
+    </div>
+  </div>
+
+  <!-- RECEIPT VIEWER -->
+  <div class="ovl" id="rcOvl">
+    <div class="mdl rc-mdl">
+      <button class="mdl-x" onclick="closeReceipt()"><i class="ico-slot" data-ic="x"></i></button>
+      <h2 style="font-size:1rem;font-weight:800;margin-bottom:.8rem"><i class="ico-slot" data-ic="receipt"></i> فیش واریز</h2>
+      <div id="rcBody"></div>
+    </div>
+  </div>
+
+  <!-- REJECT REASON -->
+  <div class="ovl" id="rjOvl">
+    <div class="mdl" style="max-width:420px">
+      <button class="mdl-x" onclick="closeReject()"><i class="ico-slot" data-ic="x"></i></button>
+      <h2 style="font-size:1rem;font-weight:800;margin-bottom:.4rem">رد کردن سفارش</h2>
+      <p style="font-size:12.5px;color:var(--muted);line-height:1.7;margin-bottom:.9rem">این متن عیناً در پنل کاربر و در پیامک اطلاع‌رسانی به او نمایش داده می‌شود — واضح بنویس تا بداند چه کند.</p>
+      <textarea id="rjReason" maxlength="400" rows="4" placeholder="مثلاً: مبلغ واریزی با مبلغ سفارش یکی نیست — لطفاً دقیقاً ۲۸۵٬۰۴۷ تومان واریز کنید."
+        style="width:100%;background:var(--bg3);border:1px solid var(--rim);border-radius:10px;padding:.7rem .8rem;color:var(--text);font-family:inherit;font-size:13px;line-height:1.8;resize:vertical"></textarea>
+      <button id="rjBtn" onclick="submitReject()" style="width:100%;margin-top:.8rem;background:linear-gradient(145deg,#d63535,#b02a2a);color:#fff;border:none;border-radius:10px;padding:.8rem;font-size:13.5px;font-weight:800;font-family:inherit;cursor:pointer">ثبت رد و اطلاع به کاربر</button>
     </div>
   </div>
 
@@ -1711,27 +1745,105 @@ async function toggleUserBan(id,ban){
 
 /* ORDERS WITH ISSUES */
 function setOF(btn,f){document.querySelectorAll(".oft").forEach(b=>b.classList.remove("on"));btn.classList.add("on");ordFilter=f;renderOrders();}
+const ORD_META={
+  paid:            {ring:"paid-ring",   stag:"paid-stag",   txt:"تأیید شده",           ico:"check-circle"},
+  pending_review:  {ring:"pending-ring",stag:"pending-stag",txt:"در انتظار بررسی فیش", ico:"clock"},
+  awaiting_payment:{ring:"pending-ring",stag:"pending-stag",txt:"در انتظار پرداخت",    ico:"credit-card"},
+  rejected:        {ring:"failed-ring", stag:"failed-stag", txt:"رد شده",              ico:"x-circle"},
+  expired:         {ring:"failed-ring", stag:"failed-stag", txt:"منقضی شده",           ico:"clock"},
+  /* وضعیت‌های نسخه‌های قبلی */
+  pending:         {ring:"pending-ring",stag:"pending-stag",txt:"در انتظار",           ico:"clock"},
+  failed:          {ring:"failed-ring", stag:"failed-stag", txt:"ناموفق",              ico:"x-circle"},
+};
 function renderOrders(){
   let ords=[...allOrders];
-  if(ordFilter&&ordFilter!=="all")ords=ords.filter(o=>o.status===ordFilter);
-  const icoMap={paid:"",failed:"",pending:"⏳"};
-  const cls={paid:"paid-ring",failed:"failed-ring",pending:"pending-ring"};
-  const stag={paid:"paid-stag",failed:"failed-stag",pending:"pending-stag"};
-  const stagTxt={paid:"پرداخت شده",failed:"ناموفق",pending:"در انتظار"};
-  document.getElementById("ordList").innerHTML=ords.length?ords.map(o=>`<div class="ord-card ${o.status!=="paid"?o.status:""}">
-    <div class="ord-status-ring ${cls[o.status]||"paid-ring"}">${icoMap[o.status]||"?"}</div>
+  if(ordFilter&&ordFilter!=="all"){
+    /* فیلتر «ناموفق» قدیمی، سفارش‌های ردشده را هم نشان می‌دهد */
+    ords=ords.filter(o=>o.status===ordFilter||(ordFilter==="failed"&&o.status==="rejected")||(ordFilter==="pending"&&o.status==="pending_review"));
+  }
+  document.getElementById("ordList").innerHTML=ords.length?ords.map(o=>{
+    const m=ORD_META[o.status]||ORD_META.pending_review;
+    const review=o.status==="pending_review";
+    return `<div class="ord-card ${o.status!=="paid"?"issue":""} ${review?"needs-review":""}">
+    <div class="ord-status-ring ${m.ring}">${ic(m.ico,16)}</div>
     <div class="ord-meta">
-      <div class="ord-nm">${o.productTitle||"—"}</div>
-      <div class="ord-sub">${o.userPhone||"—"}${o.userName&&o.userName!==o.userPhone?" — "+o.userName:""}</div>
-      <div class="ord-ref">ref: ${o.paymentRef||o.id.slice(0,14)}</div>
+      <div class="ord-nm">${escapeHtmlA(o.productTitle||"—")}</div>
+      <div class="ord-sub">${escapeHtmlA(o.userPhone||"—")}${o.userName&&o.userName!==o.userPhone?" — "+escapeHtmlA(o.userName):""}</div>
+      <div class="ord-ref">${o.trackingCode?"کد پیگیری: "+escapeHtmlA(o.trackingCode):"ref: "+escapeHtmlA(o.paymentRef||o.id.slice(0,14))}</div>
+      ${o.rejectReason?`<div class="ord-reason">دلیل رد: ${escapeHtmlA(o.rejectReason)}</div>`:""}
+      ${review?`<div class="ord-actions">
+        ${o.hasReceipt?`<button class="ord-b ord-b-view" onclick="openReceipt('${o.id}')">${ic('eye',15)} مشاهده فیش</button>`:`<span class="ord-noreceipt">فیشی ثبت نشده</span>`}
+        <button class="ord-b ord-b-ok" onclick="approveOrder('${o.id}')">${ic('check',15)} تأیید</button>
+        <button class="ord-b ord-b-no" onclick="openReject('${o.id}')">${ic('x',15)} رد</button>
+      </div>`:""}
     </div>
     <div class="ord-right">
-      <div class="ord-amt">${(o.amount||0).toLocaleString()} ت</div>
-      <span class="ord-stag ${stag[o.status]||"paid-stag"}">${stagTxt[o.status]||o.status}</span>
-      <div class="ord-date">${o.createdAt?new Date(o.createdAt).toLocaleDateString("fa-IR"):""}</div>
-      ${o.status==="failed"?`<button class="retry-btn" onclick="toast('قابلیت پرداخت مجدد در نسخه تولید','nfo')">پرداخت مجدد</button>`:""}
+      <div class="ord-amt">${(o.payAmount||o.amount||0).toLocaleString()} ت</div>
+      <span class="ord-stag ${m.stag}">${m.txt}</span>
+      <div class="ord-date">${o.submittedAt||o.createdAt?new Date(o.submittedAt||o.createdAt).toLocaleDateString("fa-IR"):""}</div>
     </div>
-  </div>`).join(""):`<div class="empty"><div class="empty-i">${ic('receipt',16)}</div><p>سفارشی در این وضعیت وجود ندارد</p></div>`;
+  </div>`;}).join(""):`<div class="empty"><div class="empty-i">${ic('receipt',16)}</div><p>سفارشی در این وضعیت وجود ندارد</p></div>`;
+  hydrateIcons(document.getElementById("ordList"));
+}
+
+/* ─── بررسی فیش ───
+   فیش با هدر Authorization خوانده می‌شود (مسیرش عمومی نیست)، پس
+   نمی‌شود مستقیم در <img src> گذاشت — به blob تبدیل می‌شود. */
+let rcUrl=null,rejectTarget=null;
+async function openReceipt(id){
+  try{
+    const r=await fetch(API+"/orders/"+encodeURIComponent(id)+"/receipt",{headers:{"Authorization":"Bearer "+token}});
+    if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d.error||"فیش باز نشد");}
+    const blob=await r.blob();
+    if(rcUrl)URL.revokeObjectURL(rcUrl);
+    rcUrl=URL.createObjectURL(blob);
+    const body=document.getElementById("rcBody");
+    body.innerHTML=blob.type==="application/pdf"
+      ? `<iframe src="${rcUrl}" style="width:100%;height:72vh;border:0;border-radius:10px"></iframe>`
+      : `<img src="${rcUrl}" alt="فیش واریز" style="max-width:100%;max-height:72vh;border-radius:10px;display:block;margin:0 auto">`;
+    document.getElementById("rcOvl").classList.add("on");
+  }catch(e){toast(e.message,"err");}
+}
+function closeReceipt(){
+  document.getElementById("rcOvl").classList.remove("on");
+  if(rcUrl){URL.revokeObjectURL(rcUrl);rcUrl=null;}
+  document.getElementById("rcBody").innerHTML="";
+}
+
+async function approveOrder(id){
+  try{
+    await api("POST",`/admin/orders/${id}/approve`);
+    toast("سفارش تأیید شد — دانلود برای کاربر باز شد","ok");
+    closeReceipt();
+    await refreshOrders();
+  }catch(e){toast(e.message,"err");}
+}
+function openReject(id){
+  rejectTarget=id;
+  document.getElementById("rjReason").value="";
+  document.getElementById("rjOvl").classList.add("on");
+  setTimeout(()=>document.getElementById("rjReason").focus(),80);
+}
+function closeReject(){document.getElementById("rjOvl").classList.remove("on");rejectTarget=null;}
+async function submitReject(){
+  const reason=document.getElementById("rjReason").value.trim();
+  if(reason.length<3){toast("دلیل رد را بنویسید","err");return;}
+  const btn=document.getElementById("rjBtn");btn.disabled=true;
+  try{
+    await api("POST",`/admin/orders/${rejectTarget}/reject`,{reason});
+    toast("سفارش رد شد و به کاربر اطلاع داده شد","ok");
+    closeReject();closeReceipt();
+    await refreshOrders();
+  }catch(e){toast(e.message,"err");}
+  finally{btn.disabled=false;}
+}
+async function refreshOrders(){
+  try{
+    allOrders=await api("GET","/admin/orders");
+    renderOrders();renderDash();
+    const s=await api("GET","/admin/stats");
+    const kO=document.getElementById("kO");if(kO)kO.textContent=s.totalOrders;
+  }catch{}
 }
 
 /* DASHBOARD MINI ORDERS */
@@ -1781,9 +1893,11 @@ async function init(){
       const b=document.getElementById("issueBadge");b.textContent=issues;b.classList.add("show");
       const banner=document.getElementById("oiBanner");banner.classList.add("show");
       document.getElementById("oiBannerTit").textContent=`${issues} سفارش نیاز به بررسی دارد`;
-      document.getElementById("oiBannerSub").textContent=`${stats.failedOrders||0} ناموفق، ${stats.pendingOrders||0} در انتظار پرداخت`;
+      document.getElementById("oiBannerSub").textContent=`${stats.pendingOrders||0} فیش در انتظار بررسی، ${stats.failedOrders||0} ردشده`;
     }
-    const f=ords.filter(o=>o.status==="failed").length,p=ords.filter(o=>o.status==="pending").length,pd=ords.filter(o=>o.status==="paid").length;
+    const f=ords.filter(o=>o.status==="failed"||o.status==="rejected").length,
+          p=ords.filter(o=>o.status==="pending_review").length,
+          pd=ords.filter(o=>o.status==="paid").length;
     document.getElementById("ocAll").textContent=ords.length;
     document.getElementById("ocPaid").textContent=pd;
     document.getElementById("ocFail").textContent=f;
